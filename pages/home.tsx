@@ -152,7 +152,7 @@ export default function HomeAuth() {
               }}
             >
               <img
-                src="/logo.svg"
+                src="/logo.png"
                 alt="Empty"
                 style={{ width: "60px", opacity: 0.3, marginBottom: "20px" }}
               />
