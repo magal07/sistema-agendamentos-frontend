@@ -8,11 +8,14 @@
   gap: 30px;
 }
 .imgCta {
-  width: 45px;
+  width: 55px;
 }
 
 .txtHeader {
-  color: white;
+  color: $darkPrimaryColor;
+  margin-top: 15px;
+  align-items: center;
+  text-align: center;
 }
 
 .nav {
@@ -30,12 +33,29 @@
   margin: 0px 5px;
   border-color: transparent;
   color: white;
+  border: $darkPrimaryColor;
   font-weight: bold;
+
   &:hover {
     border-color: $lightPrimaryColor;
     background-color: transparent;
   }
 }
+
+@media (max-width: 768px) {
+  .navBtn {
+    font-size: 20px;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 526px) {
+  .navBtn {
+    margin-top: 10px;
+    margin-right: 2px;
+  }
+}
+
 @media (max-width: 451px) {
   .nav {
     justify-content: center;
@@ -43,7 +63,7 @@
   .navBtn {
     margin: 16px 10px;
     border-color: white;
-    font-size: 14px;
+    font-size: 18px;
   }
   .ctaSection {
     gap: 10px;

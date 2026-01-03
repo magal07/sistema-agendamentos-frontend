@@ -1,104 +1,135 @@
 @import "../../../../styles/colors.module.scss";
 
-.imgLogoNav {
-  width: 160px;
-  cursor: pointer;
-}
-
-.searchImg {
-  width: 26px;
-  margin: 0px 10px;
-  cursor: pointer;
-}
-
 .nav {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 14px;
+  padding: 1.5rem 0;
+  background-color: $blackGray; // Agora é Branco
+  border-bottom: 1px solid $lightGray;
 }
 
-.userProfile {
-  font-size: 24px;
-  font-weight: bold;
-  background-color: white;
-  color: black;
-  text-transform: uppercase;
-  min-width: 45px;
-  min-height: 45px;
-  border-radius: 50px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  margin: 0px 14px;
-
+// Logo
+.imgLogoNav {
+  height: 65px; // Tamanho fixo para não estourar
+  width: auto;
   cursor: pointer;
 }
 
+// Input de Pesquisa
 .input {
-  background-color: transparent;
-  color: white;
-  border-color: $lightGray;
+  background-color: $blackGray !important; // Off-White
+  border: 1px solid $lightGray !important;
+  color: $darkGray !important;
+  border-radius: 20px; // Borda arredondada moderna
+  padding: 0.5rem 1.5rem;
+  width: 300px;
+  transition: all 0.3s;
+
   &:focus {
-    background-color: transparent;
-    color: white;
-    border-color: $mediumGray;
-    box-shadow: none;
+    border-color: $lightPrimaryColor !important; // Pink no foco
+    box-shadow: 0 0 0 2px rgba($lightPrimaryColor, 0.1) !important;
+    background-color: white !important;
   }
 
   &::placeholder {
-    color: white;
+    color: $mediumGray !important;
   }
+
+  // Responsividade para mobile
+  @media (max-width: 768px) {
+    width: 150px;
+  }
+}
+
+// Ícone de Lupa
+.searchImg {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  margin-left: -35px; // Truque para puxar o ícone para DENTRO do input
+  z-index: 2; // Fica por cima do input
+  opacity: 0.6;
+  transition: 0.2s;
+
+  &:hover {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+// Círculo com as Iniciais (Avatar)
+.userProfile {
+  width: 42px;
+  height: 42px;
+  background-color: $lightPrimaryColor; // Pink
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-left: 2rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid white;
+  box-shadow: 0 4px 10px rgba($lightPrimaryColor, 0.3);
+
+  &:hover {
+    background-color: $darkPrimaryColor;
+    transform: translateY(-2px);
+  }
+}
+
+// --- MODAL (Menu Flutuante) ---
+.overlayModal {
+  background-color: rgba(0, 0, 0, 0.3); // Fundo escuro transparente
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: 99;
 }
 
 .modal {
+  background-color: white;
   position: absolute;
-  width: 150px;
-  height: 80px;
-  top: 85px;
-  right: 10%;
-  background-color: #303030;
-  border-radius: 5px;
+  top: 80px; // Logo abaixo do header
+  right: calc(10% + 15px); // Alinhado com o container (aprox)
+  width: 200px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid $lightGray;
+  padding: 1rem;
   outline: none;
-
-  box-shadow: 8px 6px 4px #0000007c;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0px 24px;
-}
-
-.overlayerModal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: transparent;
+  z-index: 100;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .modalLink {
-  color: white;
-  margin: 5px 0px;
-  font-weight: bold;
+  color: $darkGray;
+  font-weight: 500;
   cursor: pointer;
-  text-decoration: none;
+  padding: 0.5rem;
+  border-radius: 5px;
+  transition: 0.2s;
+  margin: 0;
 
-  transition: 0.4s;
   &:hover {
-    color: $lightPrimaryColor;
+    background-color: $blackGray; // Fundo cinza claro no hover
+    color: $lightPrimaryColor; // Texto Pink
   }
 }
 
-@media (max-width: 512px) {
-  .nav {
-    justify-content: center;
-    gap: 20px;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  .modal {
-    top: 140px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

@@ -50,11 +50,7 @@ const HeaderAuth = function () {
     <>
       <Container className={styles.nav}>
         <Link href="/home">
-          <img
-            src="/logoVerboMAX.svg"
-            alt="logoVerboMAX"
-            className={styles.imgLogoNav}
-          />
+          <img src="/logo.png" alt="logo" className={styles.imgLogoNav} />
         </Link>
         <div className="d-flex align-items-center">
           <Form onSubmit={handleSearch}>

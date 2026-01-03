@@ -1,69 +1,247 @@
-.appointmentCard {
+@import "./colors.module.scss";
+
+.main {
+  background-color: #f8f9fa; // Fundo cinza claro
+  min-height: 100vh;
+
+  // --- CORREÇÃO DO FOOTER ---
   display: flex;
-  background-color: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 16px;
+  flex-direction: column;
+  // padding-bottom: 4rem; <--- REMOVA ISSO (criava um buraco abaixo do footer)
+  position: relative;
+}
+
+// --- HERO SECTION ---
+.heroSection {
+  background: linear-gradient(
+    135deg,
+    $lightPrimaryColor 0%,
+    $darkPrimaryColor 100%
+  );
+  padding: 6rem 0 4rem 0; // Aumentei o topo para compensar o Header Fixo
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  color: white;
+  box-shadow: 0 4px 20px rgba($lightPrimaryColor, 0.25);
+  margin-bottom: -2rem;
+}
+
+.welcomeTitle {
+  font-size: 1.5rem;
+  font-weight: 300;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.userName {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+// --- CONTEÚDO PRINCIPAL ---
+.contentContainer {
+  position: relative;
+  z-index: 2;
+  flex: 1; // <--- O PULO DO GATO: Faz o conteúdo empurrar o footer para baixo
+  padding-bottom: 3rem; // Espaço entre os cards e o footer
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  transition: transform 0.2s;
-  margin-bottom: 1rem; // Espaçamento entre cards
+  margin-bottom: 1.5rem;
+  margin-top: 4rem;
+  padding: 0 5px;
+}
+.sectionTitle {
+  color: $darkGray;
+  font-weight: 700;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-left: 4px solid $lightSecondaryColor;
+  padding-left: 10px;
+}
+
+// --- BOTÃO CTA ---
+.btnCta {
+  background-color: white !important;
+  color: $lightPrimaryColor !important;
+  border: none !important;
+  border-radius: 50px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   &:hover {
-    border-color: #d4af37; // Dourado da marca
+    background-color: #fff0f5 !important;
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   }
+}
 
-  @media (max-width: 576px) {
-    flex-direction: column;
-    text-align: center;
-    align-items: stretch;
+// --- CARDS DE AGENDAMENTO ---
+.appointmentCard {
+  background-color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  cursor: default;
+  border-left: 6px solid $lightPrimaryColor;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba($lightPrimaryColor, 0.15);
   }
 }
 
 .dateBox {
+  background-color: #fff0f5;
+  color: $darkPrimaryColor;
+  width: 90px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  background-color: #d4af37;
-  color: #000;
-  border-radius: 8px;
-  min-width: 70px;
-  height: 70px;
-  font-weight: bold;
+  align-items: center;
+  padding: 1rem;
+  border-right: 1px solid #f0f0f0;
+}
 
-  .day {
-    font-size: 1.5rem;
-    line-height: 1;
-  }
-  .month {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-  }
+.day {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.month {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-top: 5px;
 }
 
 .infoBox {
   flex: 1;
-  color: #fff;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 
   h4 {
-    margin: 0;
-    font-size: 1.2rem;
-    font-weight: 600;
+    color: $darkGray;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
   }
 }
 
+.timeInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: $mediumGray;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+
+  &::before {
+    content: "";
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: $lightSecondaryColor;
+  }
+}
+
+.profInfo {
+  font-size: 0.9rem;
+  color: $lightSecondaryColor;
+  font-weight: 600;
+}
+
 .statusBox {
+  padding: 1rem;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: flex-end;
-  justify-content: center;
+  min-width: 120px;
+}
 
-  @media (max-width: 576px) {
-    align-items: center;
+.btnCancel {
+  font-size: 0.8rem;
+  color: #ff6b6b;
+  background: transparent;
+  border: 1px solid #ff6b6b;
+  border-radius: 20px;
+  padding: 4px 12px;
+  transition: 0.2s;
+
+  &:hover {
+    background-color: #ff6b6b;
+    color: white;
+  }
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.confirmed {
+    background-color: #e6f9f0;
+    color: #00b074;
+  }
+  &.pending {
+    background-color: #fff8e1;
+    color: #ffc107;
+  }
+  &.cancelled {
+    background-color: #fde8e8;
+    color: #f05050;
+  }
+}
+
+@media (max-width: 576px) {
+  .heroSection {
+    padding: 5rem 0 3rem 0; // Ajuste mobile
+  }
+  .appointmentCard {
+    flex-direction: column;
+    border-left: none;
+    border-top: 6px solid $lightPrimaryColor;
+  }
+  .dateBox {
+    width: 100%;
     flex-direction: row;
+    height: auto;
+    gap: 10px;
+    padding: 0.8rem;
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .statusBox {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
-    margin-top: 10px;
   }
 }

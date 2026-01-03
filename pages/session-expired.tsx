@@ -45,7 +45,7 @@ export default function SessionExpired() {
       >
         <Container className="text-center text-white my-auto">
           <img
-            src="/logoVerboMAX.svg"
+            src="/logo.png"
             alt="logo"
             style={{ width: "200px", marginBottom: "40px" }}
           />

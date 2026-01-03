@@ -72,7 +72,7 @@ const Login = function () {
     <>
       <Head>
         <title>VerboMAX - Login</title>
-        <link rel="shortcut icon" href="/favicon.svg" type="image/x-icon" />
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderGeneric
@@ -118,7 +118,7 @@ const Login = function () {
               <Link
                 href="/forgot-password"
                 style={{
-                  color: "#d4af37",
+                  color: "#000000",
                   fontSize: "14px",
                   textDecoration: "none",
                 }}
@@ -133,7 +133,7 @@ const Login = function () {
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
                 onSuccess={(token) => setTurnstileToken(token)}
                 options={{
-                  theme: "dark",
+                  theme: "light",
                   language: "pt-BR",
                 }}
               />

@@ -33,7 +33,7 @@ const ForgotPassword = function () {
     <>
       <Head>
         <title>Sistema de Agendamentos - Esqueci minha senha</title>
-        <link rel="shortcut icon" href="/favicon.svg" type="image/x-icon" />
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderGeneric

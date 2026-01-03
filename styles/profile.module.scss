@@ -3,6 +3,8 @@
 .main {
   display: flex;
   flex-direction: column;
+  background-color: $backgroundBlack; // Branco
+  min-height: 100vh;
 }
 
 .gridContainer {
@@ -11,13 +13,18 @@
 }
 
 .header {
-  background-color: black;
+  // Removemos o black hardcoded. O HeaderAuth já tem sua cor.
+  background-color: transparent;
 }
+
 .form {
-  border: 1px solid $darkGray;
-  padding: 20px 0px;
+  border: 1px solid $lightGray; // Borda mais suave
+  padding: 20px;
   max-width: 100%;
+  border-radius: 10px;
+  background-color: $blackGray; // Off-White
 }
+
 .formName {
   display: flex;
   align-items: center;
@@ -27,60 +34,78 @@
   margin: 20px auto;
   text-transform: uppercase;
 }
+
 .nameAbbreviation {
   font-size: 40px;
   font-weight: bold;
   min-height: 70px;
   min-width: 70px;
-  background-color: white;
-  color: black;
+  background-color: $lightPrimaryColor; // Pink
+  color: white; // Texto branco no fundo pink
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .userName {
   font-size: 30px;
   font-weight: bold;
+  color: $darkGray; // Texto escuro
 }
+
 .memberTime {
   display: flex;
   justify-content: center;
   gap: 10px;
+  align-items: center;
 }
+
 .memberTimeImg {
-  width: 45px;
+  width: 30px; // Ajustado
 }
+
 .memberText {
   font-size: 14px;
-  color: $lightGray;
+  color: $mediumGray;
 }
+
 .label {
   font-size: 14px;
   font-weight: bold;
+  color: $darkGray;
 }
+
 .inputFlexDiv {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 50px;
+  gap: 30px;
 }
+
+// Estilo dos Inputs
 .inputFlex {
   width: 250px;
   text-transform: uppercase;
-  background-color: transparent;
-  border: 1px solid $darkGray;
-  color: white;
+  background-color: white; // Fundo Branco
+  border: 1px solid $lightGray;
+  color: $darkGray; // Texto Escuro
+  padding: 8px 12px;
+  border-radius: 5px;
+
   &::placeholder {
-    color: $lightGray;
+    color: $mediumGray;
   }
+
   &:focus {
-    box-shadow: none;
+    box-shadow: 0 0 0 2px rgba($lightPrimaryColor, 0.2);
     border-color: $lightPrimaryColor;
-    color: white;
-    background-color: transparent;
+    outline: none;
+    background-color: white;
+    color: $darkGray;
   }
 }
+
 .inputNormalDiv {
   display: flex;
   flex-direction: column;
@@ -88,55 +113,66 @@
   margin-top: 20px;
   gap: 20px;
 }
+
 .input {
   @extend .inputFlex;
   text-transform: lowercase;
-  width: 550px;
+  width: 100%;
+  max-width: 550px;
 }
+
 .formBtn {
-  border-color: $lightPrimaryColor;
+  background-color: $lightPrimaryColor;
+  border: none;
   text-align: center;
   color: white;
   font-weight: bold;
   font-size: 15px;
-  padding: 6px 20px;
+  padding: 10px 30px;
   display: block;
-  margin: 10px auto;
+  margin: 20px auto;
+  border-radius: 50px;
+  transition: 0.3s;
+
   &:hover {
-    border-color: $darkPrimaryColor;
-    background-color: transparent;
-    color: $lightGray;
+    background-color: $darkPrimaryColor;
+    color: white;
+    transform: translateY(-2px);
   }
 }
+
 .title {
   font-size: 45px;
   font-weight: bold;
   padding-bottom: 50px;
+  color: $lightSecondaryColor; // Nude
 }
+
 .renderForm {
   display: block;
-  width: 200px;
-  border: 1px solid $darkGray;
-  background-color: transparent;
+  width: 100%;
+  border: 1px solid $lightGray;
+  background-color: white;
+  color: $darkGray;
   font-weight: bold;
-  margin: 0 auto;
+  margin-bottom: 10px;
   padding: 14px 0px;
+  transition: 0.3s;
+
   &:hover {
-    background-color: transparent;
+    background-color: $blackGray;
     color: $lightPrimaryColor;
-  }
-  &:active {
-    background-color: transparent;
-    box-shadow: none;
-  }
-  &:focus {
-    background-color: transparent;
-    box-shadow: none;
+    border-color: $lightPrimaryColor;
   }
 }
+
 .footer {
-  background-color: black;
+  // Removido background preto
+  background-color: transparent;
+  margin-top: auto;
 }
+
+// Responsividade
 @media (max-width: 991px) {
   .title {
     text-align: center;
@@ -146,26 +182,10 @@
     margin-bottom: 40px;
   }
 }
+
 @media (max-width: 767px) {
   .inputFlexDiv {
     gap: 20px;
-  }
-  .inputFlex {
-    width: 400px;
-  }
-}
-@media (max-width: 460px) {
-  .title {
-    font-size: 30px;
-    margin-bottom: 10px;
-  }
-  .nameAbbreviation {
-    font-size: 30px;
-    min-height: 60px;
-    min-width: 60px;
-  }
-  .userName {
-    font-size: 25px;
   }
   .inputFlex {
     width: 100%;

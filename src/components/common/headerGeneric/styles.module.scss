@@ -1,84 +1,101 @@
 @import "../../../../styles/colors.module.scss";
 
-// Altura mínima base para manter o padrão
-$header-min-height: 50px;
+// Altura um pouco maior para dar elegância
+$header-height: 80px;
 
 .header {
-  background-color: #000;
+  background-color: $blackGray;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  min-height: $header-min-height;
+  height: $header-height;
   z-index: 2000;
   display: flex;
   align-items: center;
   width: 100%;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  padding: 5px 0; /* Pequeno respiro vertical */
+  // Sombra mais difusa e moderna
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.03);
 }
 
 .headerContainer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 5%; /* Padding em % ajuda a não colar na borda */
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  gap: 10px; /* Garante espaço mínimo entre logo e botão */
+  // REMOVIDO o max-width: 1200px para usar a tela toda
+  // Usamos padding generoso nas laterais para não colar na borda
+  padding: 0 3rem;
+  height: 100%;
 }
 
 .headerLogo {
-  width: 160px;
+  height: 45px; // Altura controlada
+  width: auto;
+  object-fit: contain;
   cursor: pointer;
-  transition: width 0.3s ease;
-  display: block;
+  transition: 0.3s;
+
+  &:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
 }
 
 .headerBtn {
-  font-weight: bold;
-  transition: all 0.3s;
-  white-space: nowrap; /* 🔥 PULO DO GATO: Impede o texto de quebrar linha */
-  flex-shrink: 0; /* Impede o botão de ser esmagado */
-}
-
-.headerBtn:hover {
-  border-color: $lightPrimaryColor;
-  color: $lightGray;
+  font-weight: 700;
+  font-size: 1rem;
+  color: $lightPrimaryColor; // Pink
+  border: 2px solid $lightPrimaryColor; // Borda mais visível
   background-color: transparent;
+  padding: 10px 30px; // Botão maior e mais clicável
+  border-radius: 50px;
+  white-space: nowrap; // IMPORTANTE: Impede o texto de quebrar
+  flex-shrink: 0; // IMPORTANTE: Impede o botão de ser esmagado ou "sair"
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+
+  &:hover {
+    background-color: $lightPrimaryColor;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba($lightPrimaryColor, 0.25);
+  }
+
+  &:active {
+    transform: translateY(-1px);
+  }
 }
 
 /* --- RESPONSIVO --- */
-@media (max-width: 768px) {
-  .headerLogo {
-    width: 120px;
-  }
-}
 
-/* Mobile Padrão */
-@media (max-width: 575px) {
+// Tablet e Notebooks menores
+@media (max-width: 992px) {
   .headerContainer {
-    padding: 0 15px;
-  }
-
-  .headerLogo {
-    width: 100px; /* Reduz logo para caber */
-  }
-
-  .headerBtn {
-    font-size: 10px; /* Reduz fonte */
-    padding: 6px 12px; /* Reduz botão */
+    padding: 0 2rem;
   }
 }
 
-/* Mobile Pequeno (iPhone SE, etc) */
-@media (max-width: 360px) {
-  .headerLogo {
-    width: 90px;
+// Mobile
+@media (max-width: 575px) {
+  .header {
+    height: 70px; // Um pouco menor no celular
   }
+
+  .headerContainer {
+    padding: 0 1.25rem; // Margens laterais confortáveis
+  }
+
+  .headerLogo {
+    height: 32px; // Logo ajustado
+  }
+
   .headerBtn {
-    font-size: 9px;
-    padding: 4px 8px;
+    font-size: 0.85rem;
+    padding: 8px 20px;
+    border-width: 1.5px;
   }
 }

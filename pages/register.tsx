@@ -80,17 +80,17 @@ const Register = function () {
     <>
       <Head>
         <title>Registro</title>
-        <link rel="shortcut icon" href="/favicon.svg" type="image/x-icon" />
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderGeneric
           logoUrl="/"
           btnUrl="/login"
-          btnContent="Quero fazer login"
+          btnContent="Já tenho uma conta"
         />
         <Container className="py-5">
           <p className={styles.formTitle}>
-            <strong>Bem-vindo(a) ao nosso sistema de agendamentos!</strong>
+            <strong>Bem-vinda ao Espaço Mulher</strong>
           </p>
           <Form className={styles.form} onSubmit={handleRegister}>
             <p className="text-center">

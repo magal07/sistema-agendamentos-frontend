@@ -11,7 +11,7 @@ export const appointmentService = {
     const res = await api.post("/appointments", {
       professionalId,
       serviceId,
-      date: date.toISOString(),
+      appointmentDate: date.toISOString(),
     });
     return res.data;
   },

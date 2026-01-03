@@ -41,11 +41,11 @@ export default function VerifyCertificate() {
     <>
       <Head>
         <title>Verificação de Certificado | Sistema de Agendamentos</title>
-        <link rel="shortcut icon" href="/favicon.svg" type="image/x-icon" />
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.mainContainer}>
         <Container className="d-flex flex-column align-items-center justify-content-center h-100">
-          <img src="/logoVerboMAX.svg" alt="VerboMAX" className={styles.logo} />
+          <img src="/logo.png" alt="VerboMAX" className={styles.logo} />
 
           <div className={styles.card}>
             {loading ? (

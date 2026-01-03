@@ -1,0 +1,11 @@
+@import "../../../../styles/colors.module.scss";
+
+.toastSuccess {
+  background-color: $darkPrimaryColor !important; // Seu Pink Escuro padrão
+  box-shadow: 0 4px 15px rgba($darkPrimaryColor, 0.3);
+}
+
+.toastError {
+  background-color: #e13636 !important; // Vermelho padrão de erro
+  box-shadow: 0 4px 15px rgba(105, 117, 54, 0.3);
+}

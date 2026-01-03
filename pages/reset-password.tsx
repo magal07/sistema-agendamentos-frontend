@@ -56,7 +56,7 @@ const ResetPassword = function () {
     <>
       <Head>
         <title>VerboMAX - Nova Senha</title>
-        <link rel="shortcut icon" href="/favicon.svg" type="image/x-icon" />
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderGeneric logoUrl="/" btnUrl="/login" btnContent="Ir para Login" />

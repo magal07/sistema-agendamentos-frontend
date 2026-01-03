@@ -4,32 +4,42 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: $darkPrimaryColor;
   flex-wrap: wrap;
-  padding: 26px 0px;
+  padding: 26px 0;
   gap: 16px;
+  border-top: 1px solid rgba($lightGray, 0.5); // Borda mais suave
+  margin-top: auto; // Garante que fique no final se o flex falhar
+  width: 100%;
 }
 
 .footerLogo {
-  width: 220px;
-}
-.footerLink {
-  text-decoration: none;
-  color: white;
+  width: 120px; // Logo um pouco menor para ficar mais elegante
+  opacity: 0.8;
   transition: 0.3s;
 
   &:hover {
-    color: $lightGray;
+    opacity: 1;
   }
 }
 
-@media (max-width: 575px) {
-  .footer {
-    padding: 26px 16px;
+.footerLink {
+  text-decoration: none;
+  color: $mediumGray;
+  font-size: 0.85rem;
+  transition: 0.3s;
+  font-weight: 500;
+
+  &:hover {
+    color: $lightPrimaryColor;
   }
 }
 
-@media (max-width: 406px) {
+// Responsivo
+@media (max-width: 768px) {
   .footer {
     justify-content: center;
+    text-align: center;
+    flex-direction: column;
   }
 }

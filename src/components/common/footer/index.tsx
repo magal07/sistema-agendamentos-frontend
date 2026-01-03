@@ -5,18 +5,9 @@ const Footer = function () {
   return (
     <>
       <Container className={styles.footer}>
-        <img
-          src="/logoVerboMAX.svg"
-          alt="logoFooter"
-          className={styles.footerLogo}
-        />
-        <a
-          href="https://teobrac.netlify.app/"
-          target={"blank"}
-          className={styles.footerLink}
-        >
-          PARCEIRO: TEOBRAC (OBPC-ITU)
-        </a>
+        <img src="/logo.png" alt="logoFooter" className={styles.footerLogo} />
+        Rua Jacarandá Branco, 446 - Campo Bonito - CEP: 13349-048 -
+        Indaiatuba/SP
       </Container>
     </>
   );

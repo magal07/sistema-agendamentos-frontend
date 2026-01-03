@@ -1,6 +1,31 @@
-$lightPrimaryColor: #d4af37;
-$darkPrimaryColor: #957e33;
-$lightGray: #ccc9c9;
-$mediumGray: #9e9a9a;
-$darkGray: #4e4e4e;
-$blackGray: #151515;
+/* --- PALETA ESPAÇO MULHER (Mapeada nas variáveis originais) --- */
+
+/* Cores Principais (Botões e Destaques) */
+/* Antes era Dourado, agora é PINK ROSE */
+$lightPrimaryColor: #d48498;
+
+/* Antes era Dourado Escuro, agora é PINK ESCURO (Hover) */
+$darkPrimaryColor: #b06075;
+
+/* Cores Secundárias (Detalhes e Títulos) */
+/* Antes era Nude Claro, agora é NUDE ELEGANTE (Acento) */
+$lightSecondaryColor: #c5a085;
+
+/* --- NEUTROS (Invertidos para o Light Mode) --- */
+
+/* Fundos */
+/* Antes era Preto Profundo, agora é BRANCO (Fundo do Site) */
+$backgroundBlack: #ffffff;
+
+/* Antes era Preto Suave (Cards), agora é OFF-WHITE (Gelo) */
+$blackGray: #fafafa;
+
+/* Textos e Bordas */
+/* Antes era Cinza Claro, agora é CINZA BEM CLARO (Bordas) */
+$lightGray: #eaeaea;
+
+/* Antes era Cinza Médio, agora é CINZA MÉDIO (Textos secundários) */
+$mediumGray: #666666;
+
+/* Antes era Cinza Escuro, agora é CINZA ESCURO (Textos principais de leitura) */
+$darkGray: #333333;

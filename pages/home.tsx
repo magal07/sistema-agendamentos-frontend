@@ -1,43 +1,46 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { Container, Button, Spinner, Alert } from "reactstrap";
+import { Container, Button, Spinner, Row, Col } from "reactstrap";
 import { useRouter } from "next/router";
 import HeaderAuth from "../src/components/common/headerAuth";
 import Footer from "../src/components/common/footer";
 import { appointmentService } from "../src/services/appointmentService";
+import profileService from "../src/services/profileService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import styles from "../styles/homeAuth.module.scss"; // Vamos criar esse CSS simples abaixo
+import styles from "../styles/homeAuth.module.scss";
 
 export default function HomeAuth() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [error, setError] = useState("");
+  const [userName, setUserName] = useState("Cliente"); // Estado para o nome
 
-  const fetchAppointments = async () => {
+  const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const data = await appointmentService.getMyList();
-      setAppointments(data);
+      const [listData, userData] = await Promise.all([
+        appointmentService.getMyList(),
+        profileService.fetchCurrent(), // Busca o usuário para dar "Oi"
+      ]);
+      setAppointments(listData);
+      setUserName(userData.firstName);
     } catch (err) {
-      setError("Erro ao carregar agendamentos.");
+      console.error("Erro ao carregar dados", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAppointments();
+    fetchInitialData();
   }, []);
 
   const handleCancel = async (id: number) => {
-    if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
-
+    if (!confirm("Tem certeza que deseja cancelar?")) return;
     try {
       await appointmentService.cancel(id);
-      fetchAppointments(); // Recarrega a lista
-      alert("Agendamento cancelado com sucesso.");
+      fetchInitialData();
     } catch (err) {
       alert("Erro ao cancelar.");
     }
@@ -46,89 +49,124 @@ export default function HomeAuth() {
   return (
     <>
       <Head>
-        <title>Minha Agenda</title>
+        <title>Minha Agenda - Espaço Mulher</title>
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
-      <main
-        style={{ minHeight: "100vh", backgroundColor: "#000", color: "#FFF" }}
-      >
+      <main className={styles.main}>
         <HeaderAuth />
 
-        <Container className="py-5">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 style={{ fontWeight: "bold" }}>Meus Agendamentos</h2>
-            <Button
-              color="warning"
-              className="fw-bold text-white"
-              onClick={() => router.push("/book")} // Vamos criar essa rota depois
-            >
-              + Novo Agendamento
-            </Button>
-          </div>
+        {/* --- HERO SECTION (BANNER ROSA) --- */}
+        <div className={styles.heroSection}>
+          <Container className="d-flex justify-content-between align-items-center">
+            <div>
+              <p className={styles.welcomeTitle}>Olá, seja bem-vinda</p>
+              <h1 className={styles.userName}>{userName}</h1>
+            </div>
 
-          {error && <Alert color="danger">{error}</Alert>}
+            {/* Botão flutuante no Desktop (Hero) */}
+            <Button
+              className={styles.btnCta}
+              onClick={() => router.push("/book")}
+            >
+              <span style={{ fontSize: "1.2rem", lineHeight: 0 }}>+</span>{" "}
+              Agendar Horário
+            </Button>
+          </Container>
+        </div>
+
+        {/* --- CONTEÚDO --- */}
+        <Container className={styles.contentContainer}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionTitle}>Seus Horários</span>
+          </div>
 
           {loading ? (
             <div className="text-center py-5">
-              <Spinner color="light" />
+              <Spinner color="danger" />
             </div>
           ) : appointments.length > 0 ? (
-            <div className="d-flex flex-column gap-3">
+            <Row>
               {appointments.map((appt) => (
-                <div key={appt.id} className={styles.appointmentCard}>
-                  <div className={styles.dateBox}>
-                    <span className={styles.day}>
-                      {format(new Date(appt.appointmentDate), "dd", {
-                        locale: ptBR,
-                      })}
-                    </span>
-                    <span className={styles.month}>
-                      {format(new Date(appt.appointmentDate), "MMM", {
-                        locale: ptBR,
-                      })}
-                    </span>
-                  </div>
+                <Col md={12} key={appt.id}>
+                  <div className={styles.appointmentCard}>
+                    {/* Data */}
+                    <div className={styles.dateBox}>
+                      <span className={styles.day}>
+                        {format(new Date(appt.appointmentDate), "dd")}
+                      </span>
+                      <span className={styles.month}>
+                        {format(new Date(appt.appointmentDate), "MMM", {
+                          locale: ptBR,
+                        })}
+                      </span>
+                    </div>
 
-                  <div className={styles.infoBox}>
-                    <h4>{appt.Service?.name || "Serviço"}</h4>
-                    <p className="mb-1 text-muted">
-                      {format(new Date(appt.appointmentDate), "EEEE, HH:mm", {
-                        locale: ptBR,
-                      })}
-                    </p>
-                    <p className="mb-0 text-white small">
-                      Profissional: {appt.professional?.firstName}
-                    </p>
-                  </div>
+                    {/* Informações */}
+                    <div className={styles.infoBox}>
+                      <h4>{appt.Service?.name || "Serviço Especial"}</h4>
+                      <div className={styles.timeInfo}>
+                        {format(new Date(appt.appointmentDate), "EEEE, HH:mm", {
+                          locale: ptBR,
+                        })}
+                      </div>
+                      <div className={styles.profInfo}>
+                        Profissional: {appt.professional?.firstName}
+                      </div>
+                    </div>
 
-                  <div className={styles.statusBox}>
-                    <span
-                      className={`badge ${
-                        appt.status === "confirmed"
-                          ? "bg-success"
-                          : "bg-secondary"
-                      }`}
-                    >
-                      {appt.status === "confirmed" ? "Confirmado" : appt.status}
-                    </span>
-                    {appt.status !== "cancelled" && (
-                      <Button
-                        outline
-                        color="danger"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => handleCancel(appt.id)}
+                    {/* Status e Ações */}
+                    <div className={styles.statusBox}>
+                      <span
+                        className={`${styles.statusBadge} ${
+                          styles[appt.status] || ""
+                        }`}
                       >
-                        Cancelar
-                      </Button>
-                    )}
+                        {appt.status === "confirmed"
+                          ? "Confirmado"
+                          : appt.status === "cancelled"
+                          ? "Cancelado"
+                          : "Pendente"}
+                      </span>
+
+                      {appt.status !== "cancelled" && (
+                        <button
+                          className={styles.btnCancel}
+                          onClick={() => handleCancel(appt.id)}
+                        >
+                          Cancelar
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </Col>
               ))}
-            </div>
+            </Row>
           ) : (
-            <div className="text-center py-5 opacity-50">
-              <h4>Você não tem agendamentos futuros.</h4>
-              <p>Que tal dar um tapa no visual?</p>
+            <div
+              className="text-center py-5 mt-4"
+              style={{
+                backgroundColor: "white",
+                borderRadius: "20px",
+                padding: "3rem",
+                boxShadow: "0 5px 20px rgba(0,0,0,0.05)",
+              }}
+            >
+              <img
+                src="/logo.svg"
+                alt="Empty"
+                style={{ width: "60px", opacity: 0.3, marginBottom: "20px" }}
+              />
+              <h4 className="text-muted mb-3">Nenhum agendamento futuro</h4>
+              <p className="text-muted mb-4">
+                Seu visual merece um upgrade. Vamos agendar algo?
+              </p>
+              <Button
+                color="secondary"
+                outline
+                onClick={() => router.push("/book")}
+              >
+                Ver disponibilidade
+              </Button>
             </div>
           )}
         </Container>

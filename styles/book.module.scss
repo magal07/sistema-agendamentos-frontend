@@ -1,0 +1,114 @@
+@import "./colors.module.scss";
+
+.main {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  padding-bottom: 4rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.heroBook {
+  background: linear-gradient(
+    135deg,
+    $lightPrimaryColor 0%,
+    $darkPrimaryColor 100%
+  );
+  padding: 4rem 0 5rem 0;
+  text-align: center;
+  color: white;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  margin-bottom: -3rem;
+  box-shadow: 0 4px 20px rgba($lightPrimaryColor, 0.2);
+}
+
+.title {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-weight: 300;
+  opacity: 0.9;
+}
+
+.containerForm {
+  background-color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 2;
+  border-top: 5px solid $lightPrimaryColor;
+}
+
+.label {
+  font-weight: 600;
+  color: $darkGray;
+  margin-top: 1rem;
+  display: block;
+}
+
+.input,
+.select {
+  background-color: #fcfcfc;
+  border: 1px solid $lightGray;
+  color: $darkGray;
+  border-radius: 10px;
+  padding: 0.8rem;
+  width: 100%;
+  transition: 0.3s;
+
+  &:focus {
+    border-color: $lightPrimaryColor;
+    box-shadow: 0 0 0 3px rgba($lightPrimaryColor, 0.1);
+    outline: none;
+    background-color: white;
+  }
+}
+
+// Estilização customizada para o DatePicker
+.datePickerWrapper {
+  width: 100%;
+  :global(.react-datepicker-wrapper) {
+    width: 100%;
+  }
+}
+
+.btnSubmit {
+  background-color: $lightPrimaryColor !important;
+  border: none !important;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 50px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 2rem;
+  box-shadow: 0 4px 15px rgba($lightPrimaryColor, 0.3);
+  transition: 0.3s;
+
+  &:hover {
+    background-color: $darkPrimaryColor !important;
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    background-color: $lightGray !important;
+    transform: none;
+  }
+}
+
+.btnBack {
+  text-align: center;
+  display: block;
+  margin-top: 1.5rem;
+  color: $mediumGray;
+  text-decoration: none;
+  font-size: 0.9rem;
+
+  &:hover {
+    color: $lightPrimaryColor;
+    text-decoration: underline;
+  }
+}

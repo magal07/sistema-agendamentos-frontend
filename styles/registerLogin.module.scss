@@ -1,84 +1,87 @@
 @import "./colors.module.scss";
 
 .main {
-  background-image: linear-gradient(to bottom, #151515, black);
+  min-height: 100vh;
+  background-color: $darkPrimaryColor; // Branco
+  display: flex;
+  flex-direction: column;
+  // justify-content: center; <--- REMOVIDO pois vamos controlar pelo flex-grow
+  align-items: center;
 }
 
-.formTitle {
-  font-size: 40px;
-  font-weight: bold;
-  margin-bottom: 40px;
+// --- NOVO: Centraliza o Container do meio (onde está o Form) ---
+// O :global(.container) seleciona o componente <Container> do Reactstrap
+.main :global(.container) {
+  flex-grow: 1; // Ocupa todo o espaço vazio disponível
+  display: flex;
+  flex-direction: column;
+  justify-content: center; // Centraliza o conteúdo (o form) verticalmente
+  align-items: center;
 }
 
 .form {
-  width: 600px;
-  padding: 50px;
-  border: 1px solid $darkGray;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 400px;
+  background-color: $blackGray; // Off-White
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid $lightGray;
+}
+
+.formTitle {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: $lightGray; // Pink
+  margin-top: 50px;
 }
 
 .label {
-  font-size: 14px;
-  font-weight: bold;
-  padding-top: 20px;
+  font-weight: 600;
+  color: $darkGray;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
 }
 
 .input {
-  border-color: $darkGray;
-  background-color: transparent;
-  color: white;
-
-  &::placeholder {
-    color: $lightGray;
-  }
+  background-color: white !important;
+  border: 1px solid $lightGray !important;
+  color: $darkGray !important;
+  border-radius: 8px;
+  padding: 0.75rem;
 
   &:focus {
-    background-color: transparent;
-    border-color: $lightGray;
-    color: white;
-    box-shadow: none;
+    border-color: $lightPrimaryColor !important;
+    box-shadow: 0 0 0 3px rgba($lightPrimaryColor, 0.2) !important;
+    background-color: white !important;
   }
-}
 
-.inputName {
-  @extend .input;
-  text-transform: uppercase;
   &::placeholder {
-    text-transform: none;
+    color: $mediumGray !important;
   }
 }
 
 .formBtn {
-  display: block;
-  margin: 50px auto 0 auto;
-  border-color: $lightPrimaryColor;
-  color: white;
+  width: 100%;
+  background-color: $lightPrimaryColor !important;
+  border: none !important;
+  color: white !important;
+  font-weight: bold;
+  padding: 0.8rem;
+  margin-top: 1rem;
+  border-radius: 50px;
+  transition: 0.3s;
 
   &:hover {
-    background-color: transparent;
-    border-color: $darkPrimaryColor;
-    color: $lightGray;
+    background-color: $darkPrimaryColor !important;
+    transform: translateY(-2px);
   }
 }
 
-@media (max-width: 768px) {
-  .formTitle {
-    font-size: 30px;
-  }
-  .form {
-    width: 95%;
-  }
-}
-
-@media (max-width: 540px) {
-  .form {
-    padding: 50px 10px;
-  }
-}
-
-@media (max-width: 425px) {
-  .formTitle {
-    font-size: 24px;
-    text-align: center;
-  }
+.footerPositon {
+  width: 100%;
+  // margin-top: auto; <--- REMOVIDO (o flex-grow do container já empurra o footer)
 }

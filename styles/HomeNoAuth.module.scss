@@ -1,7 +1,285 @@
-.sectionBackground {
-    background-image: linear-gradient(to bottom, #8b8b8b1a, #151515),
-    url("../public/homeNoAuth/backgroundPresentationSection.png");
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
+@import "./colors.module.scss";
+
+// --- CONFIGURAÇÕES GERAIS ---
+.main {
+  background-color: $backgroundBlack; // Branco
+  min-height: 100vh;
+  color: $darkGray; // Cinza Escuro
+  overflow-x: hidden; // Evita rolagem lateral indesejada
+}
+
+// --- SEÇÃO HERO (Apresentação) ---
+.presentationSection {
+  background-image: url("/homeNoAuth/backgroundPresentationSection.png");
+  background-size: cover;
+  background-position: center;
+  min-height: 700px; // Aumentei um pouco para dar mais imponência
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.presentationOverlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.3),
+    // Mais transparente no topo para ver a foto
+    rgba(255, 255, 255, 0.95) 90% // Quase branco sólido embaixo p/ transição
+  );
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.presentationContainer {
+  position: relative; // Para ficar acima do overlay
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+  padding: 6rem 1rem; // Padding maior
+}
+
+.title {
+  font-size: 3.5rem; // Tamanho grande explícito
+  font-weight: 800; // Extra bold
+  margin-bottom: 1.5rem;
+  color: $darkGray;
+  letter-spacing: -1px; // Kerning mais moderno
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  color: $mediumGray;
+  margin-bottom: 3.5rem;
+  font-size: 1.5rem; // Maior para leitura fácil
+  font-weight: 400;
+  max-width: 700px;
+  line-height: 1.6;
+}
+
+.highlightText {
+  color: $lightPrimaryColor; // Pink
+  font-weight: 800;
+  position: relative;
+  display: inline-block;
+
+  // Detalhe sutil: sublinhado grosso
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background-color: rgba($lightPrimaryColor, 0.2);
+    z-index: -1;
+  }
+}
+
+// --- BOTÃO CTA (Chamada para Ação) ---
+.ctaButton {
+  background-color: $lightPrimaryColor;
+  color: white;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 1.2rem 3.5rem; // Botão maior
+  letter-spacing: 2px;
+  border-radius: 50px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  box-shadow: 0 10px 25px rgba($lightPrimaryColor, 0.4); // Sombra mais rica
+
+  &:hover {
+    background-color: $darkPrimaryColor;
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 15px 35px rgba($lightPrimaryColor, 0.5);
+    color: white;
+  }
+
+  &:active {
+    transform: translateY(-1px);
+  }
+}
+
+// --- SEÇÃO DE SERVIÇOS ---
+.servicesSection {
+  background-color: $backgroundBlack;
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+
+.servicesTitle {
+  text-align: center;
+  color: $lightSecondaryColor; // Nude
+  margin-bottom: 5rem;
+  font-size: 2.2rem;
+  font-weight: 300;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  position: relative;
+
+  &::after {
+    content: "";
+    display: block;
+    width: 80px;
+    height: 3px;
+    background-color: $lightSecondaryColor;
+    margin: 20px auto 0;
+    border-radius: 2px;
+  }
+}
+
+// --- CARDS ---
+.serviceCard {
+  padding: 3rem 2rem;
+  background-color: $blackGray; // Off-White
+  border: 1px solid transparent;
+  border-radius: 20px; // Mais arredondado
+  text-align: center;
+  height: 100%;
+  transition: all 0.4s ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03); // Sombra muito leve
+  position: relative;
+  overflow: hidden;
+
+  // Efeito de borda top colorida
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background-color: $lightPrimaryColor;
+    opacity: 0;
+    transition: 0.3s;
+  }
+
+  &:hover {
+    background-color: white;
+    transform: translateY(-10px);
+    box-shadow: 0 20px 50px rgba($lightPrimaryColor, 0.15);
+
+    &::before {
+      opacity: 1;
+    }
+
+    .cardTitle {
+      color: $darkPrimaryColor;
+    }
+  }
+}
+
+.cardTitle {
+  color: $lightPrimaryColor;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: 0.3s;
+
+  word-wrap: break-word; // força quebra quando necessário
+  overflow-wrap: break-word; // versão mais moderna
+  hyphens: auto; // adiciona hífen automático em palavras longas
+  text-align: center; // centraliza para evitar corte lateral
+}
+
+.servicePrice {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 1.5rem 0;
+  color: $lightSecondaryColor; // Nude
+}
+
+.serviceDescription {
+  color: $mediumGray;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+// --- RESPONSIVIDADE (MEDIA QUERIES) ---
+// Trazendo de volta os ajustes para Mobile!
+
+@media (max-width: 991px) {
+  .title {
+    font-size: 3rem;
+  }
+  .subtitle {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .presentationSection {
+    min-height: 600px; // Um pouco menor no mobile
+  }
+
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .ctaButton {
+    padding: 1rem 2.5rem;
+    font-size: 1rem;
+  }
+
+  .servicesTitle {
+    font-size: 1.8rem;
+    margin-bottom: 3rem;
+    margin-top: 50px;
+  }
+
+  .serviceCard {
+    background-color: $lightPrimaryColor;
+    background-color: white;
+    box-shadow: 0 20px 50px rgba($lightPrimaryColor, 0.5);
+  }
+}
+
+@media (max-width: 481px) {
+  .presentationContainer {
+    padding: 4rem 1rem;
+  }
+
+  .title {
+    font-size: 2rem; // Bem ajustado para celulares pequenos
+    margin-bottom: 1rem;
+  }
+
+  .highlightText::after {
+    height: 5px; // Sublinhado mais fino no mobile
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .serviceCard {
+    padding: 2rem 1.5rem;
+  }
+
+  .servicesTitle {
+    margin-top: 120px;
+  }
+}
+
+@media (max-width: 330px) {
+  .servicesTitle {
+    margin-top: 160px;
+  }
 }

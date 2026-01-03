@@ -1,16 +1,23 @@
 import api from "./api";
 
 export const categoryService = {
-  getStats: async () => {
-    // Se não tiver rota de stats, pode remover ou criar uma no backend
-    return { data: [] };
-  },
   findAll: async () => {
+    // O token é injetado automaticamente pelo api.ts!
     const res = await api.get("/categories");
+
+    // Mantemos apenas a lógica de "desembrulhar" os dados
+    if (res.data && res.data.rows) {
+      return res.data.rows;
+    }
+
+    if (res.data && res.data.categories) {
+      return res.data.categories;
+    }
+
     return res.data;
   },
+
   findById: async (id: number) => {
-    // Backend retorna categoria com LISTA DE SERVIÇOS agora
     const res = await api.get(`/categories/${id}`);
     return res.data;
   },

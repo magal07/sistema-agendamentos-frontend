@@ -11,13 +11,13 @@ const Custom404 = function () {
     <>
       <Head>
         <title>Sistema de Agendamentos - Página não encontrada</title>
-        <link rel="shortcut icon" href="/favicon.svg" type="image/x-icon" />
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderGeneric
-          logoUrl="/logoVerboMAX.svg"
+          logoUrl="/logo.png"
           btnUrl="/login"
-          btnContent="Quero fazer login"
+          btnContent="Já tenho uma conta"
         />
 
         <Container
@@ -25,7 +25,7 @@ const Custom404 = function () {
           style={{ minHeight: "60vh" }}
         >
           <h1
-            style={{ fontSize: "10rem", fontWeight: "800", color: "#d4af37" }}
+            style={{ fontSize: "10rem", fontWeight: "800", color: "#ba0861" }}
           >
             404
           </h1>
@@ -42,7 +42,7 @@ const Custom404 = function () {
               outline
               color="light"
               size="lg"
-              style={{ border: "2px solid #d4af37", color: "#d4af37" }}
+              style={{ border: "2px solid #ba0861", color: "#ba0861 " }}
             >
               VOLTAR PARA O LOGIN
             </Button>
