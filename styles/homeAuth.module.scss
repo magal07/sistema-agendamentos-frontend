@@ -1,0 +1,69 @@
+.appointmentCard {
+  display: flex;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 16px;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.2s;
+  margin-bottom: 1rem; // Espaçamento entre cards
+
+  &:hover {
+    border-color: #d4af37; // Dourado da marca
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    text-align: center;
+    align-items: stretch;
+  }
+}
+
+.dateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #d4af37;
+  color: #000;
+  border-radius: 8px;
+  min-width: 70px;
+  height: 70px;
+  font-weight: bold;
+
+  .day {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+  .month {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+}
+
+.infoBox {
+  flex: 1;
+  color: #fff;
+
+  h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+}
+
+.statusBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+
+  @media (max-width: 576px) {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+}

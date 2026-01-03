@@ -1,0 +1,41 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: #151515; // Garante que o fundo seja preto, eliminando a faixa branca
+  color: white;
+  overflow-x: hidden; // O PULO DO GATO: Impede que qualquer elemento vaze para a lateral e crie rolagem horizontal
+}
+
+main {
+  background-color: #151515;
+  min-height: 100vh;
+  color: white;
+  p {
+    margin: 0;
+  }
+}
+
+a {
+  text-decoration: none;
+}
+
+p {
+  text-decoration: none;
+}
+
+// Estilização da barra de rolagem (Scrollbar)
+::-webkit-scrollbar {
+  width: 8px; // Ajustei para 8px com 'px' (estava só 8)
+}
+::-webkit-scrollbar-track {
+  background: #151515;
+}
+::-webkit-scrollbar-thumb {
+  background: #868686;
+  border-radius: 40px;
+}

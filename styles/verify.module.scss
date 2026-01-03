@@ -1,0 +1,152 @@
+@import "./colors.module.scss";
+
+.mainContainer {
+  background-color: #101010;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.logo {
+  height: 50px;
+  margin-bottom: 40px;
+}
+
+.card {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  color: #888;
+}
+
+.valid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  h2 {
+    color: #28a745;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+
+  .subtitle {
+    color: #aaa;
+    font-size: 14px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 20px;
+  }
+}
+
+.checkIcon {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto;
+  // Se o seu SVG for preto, use este filtro para deixá-lo verde:
+  filter: invert(53%) sepia(96%) saturate(452%) hue-rotate(86deg)
+    brightness(119%) contrast(119%);
+}
+
+.infoGroup {
+  text-align: left;
+  background-color: #222;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+
+  label {
+    color: #888;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    display: block;
+  }
+  h3 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+  }
+  p {
+    color: #fff;
+    font-weight: 500;
+    margin: 0;
+  }
+}
+
+.hashDisplay {
+  background: #000;
+  padding: 12px;
+  border-radius: 6px;
+  font-family: monospace;
+  color: #666;
+  font-size: 13px;
+  margin-top: 10px;
+  border: 1px dashed #333;
+
+  strong {
+    color: #d4af37; // Dourado
+    letter-spacing: 1px;
+  }
+}
+
+.invalid {
+  h2 {
+    color: #e50914;
+    margin-top: 20px;
+    font-weight: bold;
+  }
+  p {
+    color: #ccc;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+}
+
+.iconCircleRed {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 3px solid #e50914;
+  color: #e50914;
+  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.footer {
+  margin-top: 40px;
+  color: #444;
+  font-size: 12px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

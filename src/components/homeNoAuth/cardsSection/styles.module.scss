@@ -1,0 +1,106 @@
+@import "../../../../styles/colors.module.scss";
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  margin: 50px 0px 30px 0px;
+}
+
+.card {
+  width: 340px;
+  height: 280px;
+  border-radius: 8px;
+  padding: 14px;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  transition: 0.3s;
+
+  background-blend-mode: multiply;
+
+  &:hover {
+    transform: scale(1.03);
+    .cardTitle {
+      font-size: 18px;
+      margin-left: -6px;
+    }
+  }
+}
+
+.cardTitle {
+  background-color: rgba(0, 0, 0, 0.5); // Opacidade reduzida para 50%
+  padding: 10px 14px 4px 14px;
+
+  margin: 0 -14px 0 -14px;
+
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+
+  transition: 0.3s;
+  font-weight: bold;
+  color: white;
+  line-height: 1.2;
+}
+
+.cardDescription {
+  background-color: rgba(0, 0, 0, 0.5); // Opacidade reduzida para 50%
+  padding: 4px 14px 10px 14px;
+
+  margin: 0 -14px -14px -14px;
+
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+
+  font-size: 17px;
+  color: white;
+}
+
+// ----------------------------------------------------
+// Gradiente das Classes de Imagem (Opacidades ajustadas)
+// ----------------------------------------------------
+
+$gradient-start: rgba(0, 0, 0, 0); // Transparente (0%)
+$gradient-mid: rgba(0, 0, 0, 0.4); // Mais leve que antes
+$gradient-end: rgba(0, 0, 0, 0.6); // Mais leve que antes
+
+@mixin card-bg($url) {
+  background-image: linear-gradient(
+      to bottom,
+      $gradient-start 0%,
+      $gradient-mid 50%,
+      $gradient-end 100%
+    ),
+    url($url);
+}
+
+.card1 {
+  @extend .card;
+  @include card-bg("../../../../public/homeNoAuth/imgOqueVoceVaiAcessar1.jpg");
+}
+
+.card2 {
+  @extend .card;
+  @include card-bg("../../../../public/homeNoAuth/imgOqueVoceVaiAcessar2.jpg");
+}
+
+.card3 {
+  @extend .card;
+  @include card-bg("../../../../public/homeNoAuth/imgOqueVoceVaiAcessar3.jpg");
+}
+
+.card4 {
+  @extend .card;
+  @include card-bg("../../../../public/homeNoAuth/imgOqueVoceVaiAcessar4.jpg");
+}
+
+.card5 {
+  @extend .card;
+  @include card-bg("../../../../public/homeNoAuth/imgOqueVoceVaiAcessar5.jpg");
+}
+
+.card6 {
+  @extend .card;
+  @include card-bg("../../../../public/homeNoAuth/imgOqueVoceVaiAcessar6.jpg");
+}
