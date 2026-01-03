@@ -19,7 +19,6 @@ import { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
 
 import { appointmentService } from "../src/services/appointmentService";
-import { categoryService } from "../src/services/categoriesService";
 import { professionalService } from "../src/services/professionalService";
 import ToastComponent from "../src/components/common/toast";
 
@@ -29,38 +28,37 @@ export default function Book() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
 
-  // Estados para o Toast (Padronizado para usar o CSS centralizado)
+  // Estados para o Toast
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
 
-  // Dados das listas
+  // Dados brutos vindos do banco
   const [professionals, setProfessionals] = useState<any[]>([]);
+
+  // Listas filtradas para os Selects
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
 
-  // Selecionados
+  // Itens Selecionados
   const [selectedProf, setSelectedProf] = useState("");
   const [selectedCat, setSelectedCat] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [startDate, setStartDate] = useState(new Date());
 
+  // 1. Carrega a lista de profissionais (que agora já vem com serviços e categorias do back)
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const catsData = await categoryService.findAll();
-        setCategories(Array.isArray(catsData) ? catsData : catsData.rows || []);
-
         const profsData = await professionalService.getAll();
         setProfessionals(
           Array.isArray(profsData) ? profsData : profsData.rows || []
         );
       } catch (err) {
         setToastType("error");
-        setToastMessage("Erro ao carregar dados iniciais.");
+        setToastMessage("Erro ao carregar profissionais.");
         setToastIsOpen(true);
-        setTimeout(() => setToastIsOpen(false), 3000);
       } finally {
         setLoading(false);
       }
@@ -68,29 +66,55 @@ export default function Book() {
     loadData();
   }, []);
 
+  // 2. REGRA DE NEGÓCIO: Quando mudar o profissional, filtra as CATEGORIAS dele
   useEffect(() => {
-    const loadServices = async () => {
-      if (!selectedCat) {
-        setServices([]);
-        return;
-      }
-      try {
-        const categoryDetails = await categoryService.findById(
-          Number(selectedCat)
+    if (selectedProf) {
+      const prof = professionals.find((p) => p.id.toString() === selectedProf);
+
+      if (prof && prof.services) {
+        // Extrai categorias únicas dos serviços do profissional selecionado
+        const uniqueCategories = prof.services.reduce(
+          (acc: any[], current: any) => {
+            const x = acc.find((item) => item.id === current.Category.id);
+            if (!x) return acc.concat([current.Category]);
+            return acc;
+          },
+          []
         );
-        setServices(
-          categoryDetails?.services || categoryDetails?.Services || []
-        );
-      } catch (err) {
-        setServices([]);
+
+        setCategories(uniqueCategories);
+      } else {
+        setCategories([]);
       }
-    };
-    loadServices();
-  }, [selectedCat]);
+    } else {
+      setCategories([]);
+    }
+    // Reseta os campos seguintes
+    setSelectedCat("");
+    setSelectedService("");
+    setServices([]);
+  }, [selectedProf, professionals]);
+
+  // 3. REGRA DE NEGÓCIO: Quando mudar a categoria, filtra os SERVIÇOS desse prof nessa categoria
+  useEffect(() => {
+    if (selectedCat && selectedProf) {
+      const prof = professionals.find((p) => p.id.toString() === selectedProf);
+
+      if (prof && prof.services) {
+        const filtered = prof.services.filter(
+          (s: any) => s.categoryId.toString() === selectedCat
+        );
+        setServices(filtered);
+      }
+    } else {
+      setServices([]);
+    }
+    setSelectedService("");
+  }, [selectedCat, selectedProf, professionals]);
 
   const handleBook = async () => {
     if (!selectedProf || !selectedService || !startDate) {
-      setToastType("error"); // Usando o padrão de erro (vermelho)
+      setToastType("error");
       setToastMessage("Por favor, preencha todos os campos.");
       setToastIsOpen(true);
       setTimeout(() => setToastIsOpen(false), 3000);
@@ -104,7 +128,6 @@ export default function Book() {
         startDate
       );
 
-      // Sucesso: Informa (DarkPrimary) e redireciona
       setToastType("success");
       setToastMessage("Agendamento realizado com sucesso!");
       setToastIsOpen(true);
@@ -115,9 +138,7 @@ export default function Book() {
       }, 2000);
     } catch (err: any) {
       setToastType("error");
-      setToastMessage(
-        err.response?.data?.message || "Erro ao realizar agendamento."
-      );
+      setToastMessage(err.response?.data?.message || "Erro ao agendar.");
       setToastIsOpen(true);
       setTimeout(() => setToastIsOpen(false), 3000);
     }
@@ -135,7 +156,7 @@ export default function Book() {
           <Container>
             <h2 className={styles.title}>Agende seu Horário</h2>
             <p className={styles.subtitle}>
-              Escolha o profissional e o serviço ideal para você.
+              Personalize seu atendimento escolhendo seu profissional favorito.
             </p>
           </Container>
         </div>
@@ -148,6 +169,7 @@ export default function Book() {
               </div>
             ) : (
               <Form>
+                {/* 1. SELECIONA PROFISSIONAL (JOELMA, NIVIA, ETC) */}
                 <FormGroup>
                   <Label className={styles.label}>Profissional</Label>
                   <Input
@@ -156,7 +178,7 @@ export default function Book() {
                     value={selectedProf}
                     onChange={(e) => setSelectedProf(e.target.value)}
                   >
-                    <option value="">Selecione...</option>
+                    <option value="">Quem vai te atender?</option>
                     {professionals.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.firstName} {p.lastName}
@@ -165,19 +187,22 @@ export default function Book() {
                   </Input>
                 </FormGroup>
 
+                {/* 2. CATEGORIA (FILTRADA POR PROFISSIONAL) */}
                 <FormGroup>
                   <Label className={styles.label}>Categoria</Label>
                   <Input
                     type="select"
                     className={styles.select}
                     value={selectedCat}
-                    onChange={(e) => {
-                      setSelectedCat(e.target.value);
-                      setSelectedService("");
-                    }}
+                    onChange={(e) => setSelectedCat(e.target.value)}
+                    disabled={!selectedProf}
                   >
-                    <option value="">Selecione...</option>
-                    {categories?.map((c) => (
+                    <option value="">
+                      {selectedProf
+                        ? "O que deseja fazer?"
+                        : "Selecione um profissional primeiro"}
+                    </option>
+                    {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -185,6 +210,7 @@ export default function Book() {
                   </Input>
                 </FormGroup>
 
+                {/* 3. SERVIÇO (FILTRADO POR PROFISSONAL + CATEGORIA) */}
                 <FormGroup>
                   <Label className={styles.label}>Serviço</Label>
                   <Input
@@ -196,10 +222,10 @@ export default function Book() {
                   >
                     <option value="">
                       {selectedCat
-                        ? "Selecione o serviço..."
-                        : "Selecione uma categoria primeiro"}
+                        ? "Escolha o serviço"
+                        : "Selecione a categoria"}
                     </option>
-                    {services?.map((s) => (
+                    {services.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name} - R$ {Number(s.price).toFixed(2)}
                       </option>
@@ -238,7 +264,7 @@ export default function Book() {
                   }}
                   className={styles.btnBack}
                 >
-                  Cancelar e Voltar
+                  Voltar
                 </a>
               </Form>
             )}

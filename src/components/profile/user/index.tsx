@@ -8,7 +8,7 @@ import Cookies from "js-cookie"; // <--- Adicione esta importação
 
 const UserForm = function () {
   const router = useRouter();
-  const [color, setColor] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -45,7 +45,7 @@ const UserForm = function () {
       if (res === 200) {
         setToastIsOpen(true);
         setErrorMessage("Informações alteradas com sucesso!");
-        setColor("bg-success");
+        setToastType("success");
         setTimeout(() => setToastIsOpen(false), 1000 * 3);
 
         // Se mudou o e-mail, faz logout para forçar novo login
@@ -62,7 +62,7 @@ const UserForm = function () {
       setErrorMessage(
         error.response?.data?.message || "Erro ao atualizar dados."
       );
-      setColor("bg-danger");
+      setToastType("error");
       setTimeout(() => setToastIsOpen(false), 1000 * 3);
     }
   };
@@ -173,7 +173,7 @@ const UserForm = function () {
         </div>
       </Form>
       <ToastComponent
-        color={color}
+        type={toastType}
         isOpen={toastIsOpen}
         message={errorMessage}
       />

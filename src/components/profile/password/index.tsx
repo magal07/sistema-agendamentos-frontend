@@ -9,7 +9,7 @@ const PasswordForm = function () {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
-  const [color, setColor] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -25,7 +25,7 @@ const PasswordForm = function () {
     if (newPassword !== confirmNewPassword) {
       setToastIsOpen(true);
       setErrorMessage("Senha e confirmação de senha diferentes!");
-      setColor("bg-danger");
+      setToastType("error"); // Ajustado
       setTimeout(() => setToastIsOpen(false), 3000);
       return;
     }
@@ -34,7 +34,7 @@ const PasswordForm = function () {
     if (currentPassword === newPassword) {
       setToastIsOpen(true);
       setErrorMessage("A nova senha deve ser diferente da atual!");
-      setColor("bg-danger");
+      setToastType("error"); // Ajustado
       setTimeout(() => setToastIsOpen(false), 3000);
       return;
     }
@@ -50,7 +50,7 @@ const PasswordForm = function () {
       if (status === 204) {
         setToastIsOpen(true);
         setErrorMessage("Senha alterada com sucesso!");
-        setColor("bg-success");
+        setToastType("success");
         setTimeout(() => setToastIsOpen(false), 3000);
 
         setCurrentPassword("");
@@ -64,7 +64,7 @@ const PasswordForm = function () {
       setErrorMessage(
         error.response?.data?.message || "Erro ao atualizar senha."
       );
-      setColor("bg-danger");
+      setToastType("error");
       setTimeout(() => setToastIsOpen(false), 3000);
     }
   };
@@ -132,7 +132,7 @@ const PasswordForm = function () {
         </Button>
       </Form>
       <ToastComponent
-        color={color}
+        type={toastType}
         isOpen={toastIsOpen}
         message={errorMessage}
       />

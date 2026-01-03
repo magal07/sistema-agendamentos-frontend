@@ -49,7 +49,7 @@ export default function SessionExpired() {
             alt="logo"
             style={{ width: "200px", marginBottom: "40px" }}
           />
-          <h1 style={{ color: "#d4af37", fontWeight: "bold" }}>
+          <h1 style={{ color: "#a10a6f", fontWeight: "bold" }}>
             Sua sessão expirou
           </h1>
           <p className="my-4" style={{ fontSize: "1.2rem", opacity: 0.8 }}>

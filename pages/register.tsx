@@ -14,7 +14,7 @@ const Register = function () {
   const router = useRouter();
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastColor, setToastColor] = useState("bg-danger");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
 
   // Estados controlados para máscaras
   const [cpf, setCpf] = useState("");
@@ -34,7 +34,7 @@ const Register = function () {
     const confirmPassword = formData.get("confirmPassword")!.toString();
 
     if (password !== confirmPassword) {
-      setToastColor("bg-danger");
+      setToastType("error");
       setToastIsOpen(true);
       setTimeout(() => setToastIsOpen(false), 3000);
       setToastMessage("Senha e confirmação são diferentes!");
@@ -42,7 +42,7 @@ const Register = function () {
     }
 
     if (!validateCPF(cpf)) {
-      setToastColor("bg-danger");
+      setToastType("error");
       setToastIsOpen(true);
       setTimeout(() => setToastIsOpen(false), 3000);
       setToastMessage("CPF inválido. Verifique os números.");
@@ -66,7 +66,7 @@ const Register = function () {
         router.push("/login?registred=true");
       }
     } catch (error: any) {
-      setToastColor("bg-danger");
+      setToastType("error");
       setToastIsOpen(true);
       setTimeout(() => setToastIsOpen(false), 3000);
       // Pega a mensagem de erro do backend (ex: "Email já cadastrado")
@@ -228,7 +228,7 @@ const Register = function () {
         </Container>
         <Footer />
         <ToastComponent
-          color={toastColor}
+          type={toastType}
           isOpen={toastIsOpen}
           message={toastMessage}
         />

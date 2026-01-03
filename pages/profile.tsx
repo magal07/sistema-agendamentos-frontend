@@ -44,14 +44,14 @@ const UserInfo = function () {
             <Col md={4} className={styles.btnColumn}>
               <Button
                 className={styles.renderForm}
-                style={{ color: form === "userForm" ? "#d4af37" : "white" }}
+                style={{ color: form === "userForm" ? "#ffffff" : "white" }}
                 onClick={() => setForm("userForm")}
               >
                 DADOS PESSOAIS
               </Button>
               <Button
                 className={styles.renderForm}
-                style={{ color: form === "passwordForm" ? "#d4af37" : "white" }}
+                style={{ color: form === "passwordForm" ? "#b06075" : "white" }}
                 onClick={() => setForm("passwordForm")}
               >
                 SENHA

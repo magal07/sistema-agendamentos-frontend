@@ -13,7 +13,7 @@ import Link from "next/link"; // 1. Importação necessária
 
 const Login = function () {
   const router = useRouter();
-  const [toastColor, setToastColor] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
@@ -26,7 +26,7 @@ const Login = function () {
     const registerSuccess = router.query.registred;
 
     if (registerSuccess === "true") {
-      setToastColor("bg-success");
+      setToastType("success");
       setToastIsOpen(true);
       setTimeout(() => {
         setToastIsOpen(false);
@@ -39,7 +39,7 @@ const Login = function () {
     event.preventDefault();
 
     if (!turnstileToken) {
-      setToastColor("bg-danger");
+      setToastType("error");
       setToastIsOpen(true);
       setTimeout(() => setToastIsOpen(false), 3000);
       setToastMessage("Por favor, verifique que você não é um robô.");
@@ -59,7 +59,7 @@ const Login = function () {
       }
     } catch (error: any) {
       // AGORA O ERRO É CAPTURADO AQUI E NÃO TRAVA MAIS
-      setToastColor("bg-danger");
+      setToastType("error");
       setToastIsOpen(true);
       setTimeout(() => setToastIsOpen(false), 3000);
       setToastMessage(
@@ -144,7 +144,7 @@ const Login = function () {
             </Button>
           </Form>
           <ToastComponent
-            color={toastColor}
+            type={toastType}
             isOpen={toastIsOpen}
             message={toastMessage}
           />

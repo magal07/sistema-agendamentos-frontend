@@ -152,7 +152,7 @@
   display: block;
   width: 100%;
   border: 1px solid $lightGray;
-  background-color: white;
+  background-color: $lightPrimaryColor;
   color: $darkGray;
   font-weight: bold;
   margin-bottom: 10px;
@@ -160,8 +160,8 @@
   transition: 0.3s;
 
   &:hover {
-    background-color: $blackGray;
-    color: $lightPrimaryColor;
+    background-color: $darkPrimaryColor;
+    color: $darkPrimaryColor;
     border-color: $lightPrimaryColor;
   }
 }

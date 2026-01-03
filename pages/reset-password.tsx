@@ -15,7 +15,7 @@ const ResetPassword = function () {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [toastColor, setToastColor] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
@@ -23,14 +23,14 @@ const ResetPassword = function () {
     event.preventDefault();
 
     if (password !== confirmPassword) {
-      setToastColor("bg-danger");
+      setToastType("error");
       setToastIsOpen(true);
       setToastMessage("As senhas não coincidem!");
       return;
     }
 
     if (typeof token !== "string") {
-      setToastColor("bg-danger");
+      setToastType("error");
       setToastIsOpen(true);
       setToastMessage("Token inválido ou ausente.");
       return;
@@ -39,14 +39,14 @@ const ResetPassword = function () {
     const res = await authService.resetPassword(token, password);
 
     if (res.status === 200) {
-      setToastColor("bg-success");
+      setToastType("success");
       setToastIsOpen(true);
       setToastMessage("Senha alterada com sucesso! Redirecionando...");
       setTimeout(() => {
         router.push("/login");
       }, 3000);
     } else {
-      setToastColor("bg-danger");
+      setToastType("error");
       setToastIsOpen(true);
       setToastMessage(res.data.message || "Erro ao redefinir senha.");
     }
@@ -106,7 +106,7 @@ const ResetPassword = function () {
           <Footer />
         </div>
         <ToastComponent
-          color={toastColor}
+          type={toastType}
           isOpen={toastIsOpen}
           message={toastMessage}
         />

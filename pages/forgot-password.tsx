@@ -9,7 +9,7 @@ import ToastComponent from "../src/components/common/toast";
 
 const ForgotPassword = function () {
   const [email, setEmail] = useState("");
-  const [toastColor, setToastColor] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
@@ -19,11 +19,11 @@ const ForgotPassword = function () {
     const res = await authService.forgotPassword(email);
 
     if (res.status === 200) {
-      setToastColor("bg-success");
+      setToastType("success");
       setToastIsOpen(true);
       setToastMessage("E-mail enviado! Verifique sua caixa de entrada.");
     } else {
-      setToastColor("bg-danger");
+      setToastType("error");
       setToastIsOpen(true);
       setToastMessage(res.data.message || "Erro ao processar solicitação.");
     }
@@ -71,7 +71,7 @@ const ForgotPassword = function () {
           <Footer />
         </div>
         <ToastComponent
-          color={toastColor}
+          type={toastType}
           isOpen={toastIsOpen}
           message={toastMessage}
         />
