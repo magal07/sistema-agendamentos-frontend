@@ -2,7 +2,7 @@ import Head from "next/head";
 import { Container, Button, Row, Col } from "reactstrap";
 import HeaderNoAuth from "../src/components/homeNoAuth/headerNoAuth";
 import Footer from "../src/components/common/footer";
-import styles from "../styles/homeNoAuth.module.scss";
+import styles from "../styles/homeNoAuth.module.scss"; // force homeNoAuth case sensisitve!
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useEffect } from "react";
