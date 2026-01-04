@@ -17,8 +17,34 @@ const HomeNoAuth = () => {
     <>
       <Head>
         <title>Espaço Mulher - Beleza & Bem-estar</title>
+
+        {/* 1. Ícone da aba do navegador (Usa o favicon.png que você tem) */}
         <link rel="shortcut icon" href="/favicon.png" />
+
+        {/* 2. Configuração para WhatsApp / Facebook (Open Graph) */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://espacovirtuosa.com.br/" />
+        <meta property="og:title" content="Espaço Virtuosa - Agendamentos" />
+        <meta
+          property="og:description"
+          content="Agende seu horário online com facilidade e exclusividade."
+        />
+
+        <meta
+          property="og:image"
+          content="https://espacovirtuosa.com.br/og-image.jpg"
+        />
+
+        {/* 3. Ícone de "App" para iPhone (iOS ignora o manifest, precisa dessa linha) */}
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+        {/* 4. Cor da barra de status (Combinando com seu manifest) */}
+        <meta name="theme-color" content="#b06075" />
+
+        {/* 5. Arquivo Manifest (Aqui estão os ícones 192 e 512 para Android) */}
+        <link rel="manifest" href="/manifest.json" />
       </Head>
+
       <main className={styles.main}>
         {/* Seção Hero / Apresentação */}
         <div className={styles.presentationSection}>
