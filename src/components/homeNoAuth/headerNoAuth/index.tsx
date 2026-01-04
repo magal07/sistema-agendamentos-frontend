@@ -1,6 +1,7 @@
 import { Button, Container } from "reactstrap";
 import styles from "./styles.module.scss";
 import Link from "next/link";
+import InstallButton from "../../common/installButton";
 
 const HeaderNoAuth = function () {
   return (
@@ -27,6 +28,7 @@ const HeaderNoAuth = function () {
           <img src="/logo.png" alt="logo" className={styles.imgLogoNav} />
         </Link>
         <div>
+          <InstallButton />
           <Link href="/login">
             <Button className={styles.navBtn} outline>
               Entrar

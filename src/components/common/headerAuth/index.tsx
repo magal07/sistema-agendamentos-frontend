@@ -5,6 +5,7 @@ import Modal from "react-modal";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/router";
 import profileService from "../../../services/profileService";
+import InstallButton from "../../common/installButton";
 
 Modal.setAppElement("#__next");
 
@@ -71,6 +72,8 @@ const HeaderAuth = function () {
             className={styles.searchImg}
             onClick={handleSearchClick}
           />
+
+          <InstallButton />
 
           {/* NOTIFICAÇÕES DOS COMENTÁRIOS */}
 
