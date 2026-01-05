@@ -82,8 +82,8 @@ const HomeNoAuth = () => {
           <Row>
             <Col md={4} className="mb-4">
               <div className={styles.serviceCard}>
-                <h4 className={styles.cardTitle}>MANICURE OU PEDICURE</h4>
-                <p className={styles.servicePrice}>A partir de R$ 39,90</p>
+                <h4 className={styles.cardTitle}>MANICURE E PEDICURE</h4>
+                <p className={styles.servicePrice}>A partir de R$ 60,00</p>
                 <p className={styles.serviceDescription}>
                   Manicure completa com esfoliação e hidratação especial.
                 </p>
@@ -92,7 +92,7 @@ const HomeNoAuth = () => {
             <Col md={4} className="mb-4">
               <div className={styles.serviceCard}>
                 <h4 className={styles.cardTitle}>LASH DESIGN</h4>
-                <p className={styles.servicePrice}>A partir de R$ 149,90</p>
+                <p className={styles.servicePrice}>A partir de R$ 110,00</p>
                 <p className={styles.serviceDescription}>
                   Renovação e melhoria dos seus cílios.
                 </p>
@@ -101,7 +101,7 @@ const HomeNoAuth = () => {
             <Col md={4} className="mb-4">
               <div className={styles.serviceCard}>
                 <h4 className={styles.cardTitle}>SOBRANCELHAS</h4>
-                <p className={styles.servicePrice}>A partir de R$ 35,90</p>
+                <p className={styles.servicePrice}>A partir de R$ 38,00</p>
                 <p className={styles.serviceDescription}>
                   Renove sua sombrancelha e sinta-se linda novamente.
                 </p>
