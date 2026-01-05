@@ -16,7 +16,7 @@ const HomeNoAuth = () => {
   return (
     <>
       <Head>
-        <title>Espaço Mulher - Beleza & Bem-estar</title>
+        <title>Espaço Virtuosa - Beleza & Bem-estar</title>
 
         {/* 1. Ícone da aba do navegador (Usa o favicon.png que você tem) */}
         <link rel="shortcut icon" href="/favicon.png" />

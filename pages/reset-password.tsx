@@ -55,7 +55,7 @@ const ResetPassword = function () {
   return (
     <>
       <Head>
-        <title>VerboMAX - Nova Senha</title>
+        <title>Espaço Virtuosa - Nova Senha</title>
         <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>

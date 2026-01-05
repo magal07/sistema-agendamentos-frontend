@@ -147,7 +147,8 @@ export default function Book() {
   return (
     <>
       <Head>
-        <title>Novo Agendamento - Espaço Mulher</title>
+        <title>Novo Agendamento - Espaço Virtuosa</title>
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderAuth />

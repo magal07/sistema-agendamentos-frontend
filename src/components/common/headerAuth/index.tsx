@@ -14,10 +14,10 @@ const HeaderAuth = function () {
   const [modalOpen, setModalOpen] = useState(false);
   const [initials, setInitials] = useState("");
   const [searchName, setSearchName] = useState("");
+  const [userRole, setUserRole] = useState("");
 
   const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     router.push(`search?name=${searchName}`);
     setSearchName("");
   };
@@ -29,9 +29,12 @@ const HeaderAuth = function () {
 
   useEffect(() => {
     profileService.fetchCurrent().then((user) => {
+      // 1. TRATAMENTO DE SEGURANÇA
+      const role = user.role ? user.role.toLowerCase() : "";
       const firstNameInitial = user.firstName.slice(0, 1);
       const lastNameInitial = user.lastName.slice(0, 1);
       setInitials(firstNameInitial + lastNameInitial);
+      setUserRole(role);
     });
   }, []);
 
@@ -43,7 +46,6 @@ const HeaderAuth = function () {
   };
   const handleLogout = () => {
     sessionStorage.clear();
-
     router.push("/");
   };
 
@@ -54,7 +56,18 @@ const HeaderAuth = function () {
           <img src="/logo.png" alt="logo" className={styles.imgLogoNav} />
         </Link>
         <div className="d-flex align-items-center">
-          <Form onSubmit={handleSearch}>
+          {/* LINK MINHA AGENDA */}
+          {(userRole === "professional" ||
+            userRole === "admin" ||
+            "client") && (
+            <Link href="/agenda" style={{ textDecoration: "none" }}>
+              <div className={styles.agendaLink}>
+                <span>MINHA AGENDA</span>
+              </div>
+            </Link>
+          )}
+
+          {/* <Form onSubmit={handleSearch}>
             <Input
               name="search"
               type="search"
@@ -65,17 +78,15 @@ const HeaderAuth = function () {
                 setSearchName(event.currentTarget.value.toLowerCase());
               }}
             />
-          </Form>
-          <img
+          </Form> */}
+          {/* <img
             src="/homeAuth/iconSearch.svg"
             alt="lupaHeader"
             className={styles.searchImg}
             onClick={handleSearchClick}
-          />
+          /> */}
 
           <InstallButton />
-
-          {/* NOTIFICAÇÕES DOS COMENTÁRIOS */}
 
           <p className={styles.userProfile} onClick={handleOpenModal}>
             {initials}

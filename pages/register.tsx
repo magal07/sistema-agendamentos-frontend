@@ -90,7 +90,7 @@ const Register = function () {
         />
         <Container className="py-5">
           <p className={styles.formTitle}>
-            <strong>Bem-vinda ao Espaço Mulher</strong>
+            <strong>Bem-vinda ao Espaço Virtuosa</strong>
           </p>
           <Form className={styles.form} onSubmit={handleRegister}>
             <p className="text-center">

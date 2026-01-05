@@ -71,7 +71,7 @@ const Login = function () {
   return (
     <>
       <Head>
-        <title>VerboMAX - Login</title>
+        <title>ESPAÇO VIRTUOSA - Login</title>
         <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>

@@ -32,7 +32,8 @@ export default function SessionExpired() {
   return (
     <>
       <Head>
-        <title>VerboMAX - Sessão Expirada</title>
+        <title>Espaço Virtuosa - Sessão Expirada</title>
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main
         className={styles.main}

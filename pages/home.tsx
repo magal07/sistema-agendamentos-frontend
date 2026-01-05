@@ -14,14 +14,14 @@ export default function HomeAuth() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [userName, setUserName] = useState("Cliente"); // Estado para o nome
+  const [userName, setUserName] = useState("Cliente");
 
   const fetchInitialData = async () => {
     try {
       setLoading(true);
       const [listData, userData] = await Promise.all([
         appointmentService.getMyList(),
-        profileService.fetchCurrent(), // Busca o usuário para dar "Oi"
+        profileService.fetchCurrent(),
       ]);
       setAppointments(listData);
       setUserName(userData.firstName);
@@ -49,7 +49,7 @@ export default function HomeAuth() {
   return (
     <>
       <Head>
-        <title>Minha Agenda - Espaço Mulher</title>
+        <title>Minha Agenda - Espaço Virtuosa</title>
         <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
@@ -63,7 +63,7 @@ export default function HomeAuth() {
               <h1 className={styles.userName}>{userName}</h1>
             </div>
 
-            {/* Botão flutuante no Desktop (Hero) */}
+            {/* Botão flutuante no Desktop (Hero) - Voltou a ser apenas um */}
             <Button
               className={styles.btnCta}
               onClick={() => router.push("/book")}

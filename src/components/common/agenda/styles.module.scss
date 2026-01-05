@@ -1,0 +1,157 @@
+@import "../../../../styles/colors.module.scss";
+
+// Container Principal
+.calendarContainer {
+  height: 75vh;
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+
+  // --- OVERRIDES GLOBAIS ---
+  :global {
+    .rbc-calendar {
+      color: #222222 !important;
+      font-family: sans-serif;
+    }
+
+    // Links de data e Header
+    .rbc-button-link,
+    .rbc-date-cell a,
+    .rbc-date-cell button {
+      color: #222222 !important;
+      font-weight: bold;
+    }
+    .rbc-header {
+      color: $darkPrimaryColor !important;
+      font-weight: 800 !important;
+      text-transform: uppercase;
+      padding: 10px 0;
+      border-bottom: 2px solid #eee !important;
+    }
+    .rbc-time-gutter .rbc-timeslot-group .rbc-label {
+      color: #444444 !important;
+      font-weight: bold;
+    }
+
+    // Toolbar
+    .rbc-toolbar button {
+      color: #444 !important;
+      border: 1px solid #ddd !important;
+    }
+    .rbc-toolbar button.rbc-active {
+      background-color: $lightPrimaryColor !important;
+      color: white !important;
+      border-color: $lightPrimaryColor !important;
+    }
+    .rbc-toolbar-label {
+      color: $darkPrimaryColor !important;
+      font-weight: bold;
+      font-size: 1.5rem;
+      text-transform: uppercase !important;
+    }
+
+    // --- VISÃO DE MÊS (AJUSTADA PARA TEXTO) ---
+    .rbc-month-view {
+      .rbc-event {
+        background-color: transparent !important; // Sem fundo colorido
+        box-shadow: none !important;
+        padding: 0 5px !important; // Um pouco de espaço lateral
+      }
+      // Removemos o text-align center global para permitir alinhar a esquerda
+      .rbc-event-content {
+        text-align: left;
+      }
+    }
+
+    // --- VISÃO DE SEMANA/DIA ---
+    .rbc-time-view {
+      .rbc-event {
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+        min-height: 35px !important;
+        opacity: 1 !important;
+        padding: 2px 5px !important;
+        width: 100% !important;
+        overflow: hidden !important;
+      }
+      .rbc-event-content {
+        color: white !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        display: block !important;
+        line-height: 1.2;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      .rbc-event-label {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-size: 0.75rem !important;
+        display: block !important;
+      }
+    }
+
+    .rbc-day-slot .rbc-time-slot {
+      border-top: 1px solid #f0f0f0 !important;
+    }
+    .rbc-today {
+      background-color: rgba($lightPrimaryColor, 0.05) !important;
+    }
+  }
+}
+
+// --- CLASSES DO COMPONENTE ---
+
+// Container do Evento no Mês (Flexbox para alinhar Flor + Texto)
+.monthEvent {
+  display: flex;
+  align-items: center; // Centraliza verticalmente
+  justify-content: flex-start; // Alinha a esquerda
+  gap: 5px; // Espaço entre a flor e o nome
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: scale(1.02); // Leve zoom ao passar o mouse
+  }
+}
+
+// A Florzinha
+.monthIcon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+// O Nome da Pessoa
+.monthText {
+  color: $darkPrimaryColor; // Rosa Escuro
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap; // Não quebra linha
+  overflow: hidden; // Esconde se for muito grande
+  text-overflow: ellipsis; // Coloca "..." no final
+}
+
+// Semana (Texto Simples)
+.timeEvent {
+  font-size: 0.8rem;
+  line-height: 1.1;
+  overflow: hidden;
+}
+
+// --- CLASSES eventPropGetter ---
+.eventBlockMonth {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.eventBlockTime {
+  color: white !important;
+  border-radius: 5px !important;
+  border: none !important;
+  display: block !important;
+}
