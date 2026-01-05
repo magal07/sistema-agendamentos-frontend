@@ -33,3 +33,30 @@
   font-size: 1.1rem;
   font-weight: 400;
 }
+
+.configBtn {
+  background-color: transparent !important; // Fundo transparente
+  border: 1px solid $lightPrimaryColor !important; // Borda Rosa
+  color: $lightPrimaryColor !important; // Texto Rosa
+
+  font-weight: 600 !important;
+  border-radius: 50px !important; // Bem arredondado (estilo pílula)
+  padding: 8px 20px !important;
+  transition: all 0.3s ease !important;
+  display: flex;
+  align-items: center;
+  gap: 8px; // Espaço entre o ícone e o texto
+
+  // Efeito ao passar o mouse
+  &:hover {
+    background-color: $lightPrimaryColor !important;
+    color: white !important;
+    transform: translateY(-2px); // Sobe um pouquinho
+    box-shadow: 0 4px 10px rgba($lightPrimaryColor, 0.3);
+  }
+
+  // Efeito ao clicar
+  &:active {
+    transform: translateY(0);
+  }
+}

@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Container,
   Form,
@@ -17,9 +17,11 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
+import { setHours, setMinutes } from "date-fns"; // Importante para manipular horas
 
 import { appointmentService } from "../src/services/appointmentService";
 import { professionalService } from "../src/services/professionalService";
+import availabilityService from "../src/services/availabilityService"; // Importe o serviço
 import ToastComponent from "../src/components/common/toast";
 
 registerLocale("pt-BR", ptBR);
@@ -33,20 +35,21 @@ export default function Book() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
 
-  // Dados brutos vindos do banco
+  // Dados
   const [professionals, setProfessionals] = useState<any[]>([]);
-
-  // Listas filtradas para os Selects
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
 
-  // Itens Selecionados
+  // NOVO: Estado para guardar a disponibilidade do profissional selecionado
+  const [availability, setAvailability] = useState<any[]>([]);
+
+  // Seleções
   const [selectedProf, setSelectedProf] = useState("");
   const [selectedCat, setSelectedCat] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [startDate, setStartDate] = useState(new Date());
 
-  // 1. Carrega a lista de profissionais (que agora já vem com serviços e categorias do back)
+  // 1. Carrega Profissionais
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -56,9 +59,7 @@ export default function Book() {
           Array.isArray(profsData) ? profsData : profsData.rows || []
         );
       } catch (err) {
-        setToastType("error");
-        setToastMessage("Erro ao carregar profissionais.");
-        setToastIsOpen(true);
+        showToast("error", "Erro ao carregar profissionais.");
       } finally {
         setLoading(false);
       }
@@ -66,13 +67,13 @@ export default function Book() {
     loadData();
   }, []);
 
-  // 2. REGRA DE NEGÓCIO: Quando mudar o profissional, filtra as CATEGORIAS dele
+  // 2. Quando mudar Profissional: Filtra Categorias E Busca Disponibilidade
   useEffect(() => {
     if (selectedProf) {
       const prof = professionals.find((p) => p.id.toString() === selectedProf);
 
+      // A) Filtra categorias
       if (prof && prof.services) {
-        // Extrai categorias únicas dos serviços do profissional selecionado
         const uniqueCategories = prof.services.reduce(
           (acc: any[], current: any) => {
             const x = acc.find((item) => item.id === current.Category.id);
@@ -81,25 +82,32 @@ export default function Book() {
           },
           []
         );
-
         setCategories(uniqueCategories);
       } else {
         setCategories([]);
       }
+
+      // B) BUSCA DISPONIBILIDADE (NOVO)
+      availabilityService
+        .getByProfessionalId(Number(selectedProf))
+        .then((data) => {
+          setAvailability(data);
+        });
     } else {
       setCategories([]);
+      setAvailability([]); // Limpa se desmarcar
     }
-    // Reseta os campos seguintes
+
+    // Reseta campos
     setSelectedCat("");
     setSelectedService("");
     setServices([]);
   }, [selectedProf, professionals]);
 
-  // 3. REGRA DE NEGÓCIO: Quando mudar a categoria, filtra os SERVIÇOS desse prof nessa categoria
+  // 3. Filtra Serviços
   useEffect(() => {
     if (selectedCat && selectedProf) {
       const prof = professionals.find((p) => p.id.toString() === selectedProf);
-
       if (prof && prof.services) {
         const filtered = prof.services.filter(
           (s: any) => s.categoryId.toString() === selectedCat
@@ -112,12 +120,59 @@ export default function Book() {
     setSelectedService("");
   }, [selectedCat, selectedProf, professionals]);
 
+  // --- LÓGICA DO DATEPICKER ---
+
+  // A. Filtra os dias da semana (Bloqueia Domingo se não trabalhar)
+  const isDateAvailable = (date: Date) => {
+    if (!selectedProf) return false;
+    if (availability.length === 0) return true; // Se não configurou, libera tudo (ou bloqueia tudo, sua escolha)
+
+    const dayOfWeek = date.getDay(); // 0 = Domingo, 1 = Segunda...
+    // Verifica se existe disponibilidade configurada para esse dia
+    return availability.some((a) => a.dayOfWeek === dayOfWeek);
+  };
+
+  // B. Calcula Horário Mínimo e Máximo para o dia selecionado
+  const { minTime, maxTime } = useMemo(() => {
+    if (!selectedProf || availability.length === 0) {
+      // Padrão se não tiver config: 08:00 as 18:00
+      return {
+        minTime: setHours(setMinutes(new Date(), 0), 8),
+        maxTime: setHours(setMinutes(new Date(), 0), 18),
+      };
+    }
+
+    const dayOfWeek = startDate.getDay();
+    const config = availability.find((a) => a.dayOfWeek === dayOfWeek);
+
+    if (!config) {
+      // Se o dia não estiver na lista (ex: selecionou no calendário mas mudou config), bloqueia visualmente
+      return {
+        minTime: setHours(setMinutes(new Date(), 0), 0),
+        maxTime: setHours(setMinutes(new Date(), 0), 0),
+      };
+    }
+
+    const [startHour, startMin] = config.startTime.split(":").map(Number);
+    const [endHour, endMin] = config.endTime.split(":").map(Number);
+
+    return {
+      minTime: setHours(setMinutes(new Date(), startMin), startHour),
+      maxTime: setHours(setMinutes(new Date(), endMin), endHour),
+    };
+  }, [startDate, availability, selectedProf]);
+
+  // Helper Toast
+  const showToast = (type: "success" | "error", msg: string) => {
+    setToastType(type);
+    setToastMessage(msg);
+    setToastIsOpen(true);
+    setTimeout(() => setToastIsOpen(false), 3000);
+  };
+
   const handleBook = async () => {
     if (!selectedProf || !selectedService || !startDate) {
-      setToastType("error");
-      setToastMessage("Por favor, preencha todos os campos.");
-      setToastIsOpen(true);
-      setTimeout(() => setToastIsOpen(false), 3000);
+      showToast("error", "Por favor, preencha todos os campos.");
       return;
     }
 
@@ -128,19 +183,12 @@ export default function Book() {
         startDate
       );
 
-      setToastType("success");
-      setToastMessage("Agendamento realizado com sucesso!");
-      setToastIsOpen(true);
-
+      showToast("success", "Agendamento realizado com sucesso!");
       setTimeout(() => {
-        setToastIsOpen(false);
         router.push("/home");
       }, 2000);
     } catch (err: any) {
-      setToastType("error");
-      setToastMessage(err.response?.data?.message || "Erro ao agendar.");
-      setToastIsOpen(true);
-      setTimeout(() => setToastIsOpen(false), 3000);
+      showToast("error", err.response?.data?.message || "Erro ao agendar.");
     }
   };
 
@@ -170,7 +218,7 @@ export default function Book() {
               </div>
             ) : (
               <Form>
-                {/* 1. SELECIONA PROFISSIONAL (JOELMA, NIVIA, ETC) */}
+                {/* 1. SELECIONA PROFISSIONAL */}
                 <FormGroup>
                   <Label className={styles.label}>Profissional</Label>
                   <Input
@@ -188,7 +236,7 @@ export default function Book() {
                   </Input>
                 </FormGroup>
 
-                {/* 2. CATEGORIA (FILTRADA POR PROFISSIONAL) */}
+                {/* 2. CATEGORIA */}
                 <FormGroup>
                   <Label className={styles.label}>Categoria</Label>
                   <Input
@@ -211,7 +259,7 @@ export default function Book() {
                   </Input>
                 </FormGroup>
 
-                {/* 3. SERVIÇO (FILTRADO POR PROFISSONAL + CATEGORIA) */}
+                {/* 3. SERVIÇO */}
                 <FormGroup>
                   <Label className={styles.label}>Serviço</Label>
                   <Input
@@ -234,6 +282,7 @@ export default function Book() {
                   </Input>
                 </FormGroup>
 
+                {/* 4. DATA E HORA (COM REGRAS) */}
                 <FormGroup>
                   <Label className={styles.label}>Data e Hora</Label>
                   <div className={styles.datePickerWrapper}>
@@ -244,16 +293,40 @@ export default function Book() {
                       }
                       showTimeSelect
                       timeFormat="HH:mm"
-                      timeIntervals={60}
+                      timeIntervals={30} // 30 min fica melhor pra agendamento
                       dateFormat="dd/MM/yyyy - HH:mm"
                       locale="pt-BR"
                       className={styles.input}
-                      minDate={new Date()}
+                      minDate={new Date()} // Não agendar passado
+                      // --- REGRAS DE DISPONIBILIDADE ---
+                      // 1. Desabilita dias que não trabalha (ex: Domingo)
+                      filterDate={isDateAvailable}
+                      // 2. Define hora mínima (ex: 08:00 do dia selecionado)
+                      minTime={minTime}
+                      // 3. Define hora máxima (ex: 18:00 do dia selecionado)
+                      maxTime={maxTime}
+                      // Desabilita se não selecionar Profissional
+                      disabled={!selectedProf}
+                      placeholderText={
+                        !selectedProf
+                          ? "Selecione um profissional"
+                          : "Escolha a data"
+                      }
                     />
                   </div>
+                  {/* Dica para o usuário */}
+                  {selectedProf && availability.length === 0 && (
+                    <small className="text-danger mt-1 d-block">
+                      Este profissional ainda não configurou horários.
+                    </small>
+                  )}
                 </FormGroup>
 
-                <Button className={styles.btnSubmit} onClick={handleBook}>
+                <Button
+                  className={styles.btnSubmit}
+                  onClick={handleBook}
+                  disabled={!selectedProf}
+                >
                   Confirmar Agendamento
                 </Button>
 

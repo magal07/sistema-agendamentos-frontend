@@ -4,7 +4,7 @@ import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import moment from "moment";
 import "moment/locale/pt-br";
 import { appointmentService } from "../../../services/appointmentService";
-import profileService from "../../../services/profileService"; // Importe o ProfileService
+import profileService from "../../../services/profileService";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import styles from "./styles.module.scss";
@@ -15,11 +15,19 @@ const DnDCalendar = withDragAndDrop(Calendar);
 
 const AgendaComponent = () => {
   const [events, setEvents] = useState<any[]>([]);
-  const [view, setView] = useState<View>(Views.WEEK); // Cliente geralmente prefere ver Mês ou Lista, mas Semana é ok
+  const [view, setView] = useState<View>(Views.WEEK);
   const [date, setDate] = useState(new Date());
-  const [userRole, setUserRole] = useState<string>(""); // Para saber quem está vendo
+  const [userRole, setUserRole] = useState<string>("");
 
-  // 1. Descobrir quem é o usuário para configurar a visualização
+  // --- CONFIGURAÇÃO VISUAL: LIMITES DE HORÁRIO (06:00 às 22:00) ---
+  const minTime = new Date();
+  minTime.setHours(6, 0, 0);
+
+  const maxTime = new Date();
+  maxTime.setHours(22, 0, 0);
+  // ----------------------------------------------------------------
+
+  // 1. Descobrir quem é o usuário
   useEffect(() => {
     profileService.fetchCurrent().then((user) => {
       if (user.role) setUserRole(user.role);
@@ -31,12 +39,13 @@ const AgendaComponent = () => {
       const start = moment(date).startOf("month").subtract(1, "month").format();
       const end = moment(date).endOf("month").add(1, "month").format();
 
+      // Busca no backend (agora filtrando Admin, Profissional ou Cliente lá no controller)
       const data = await appointmentService.getAll({ start, end });
 
       const formattedEvents = data.map((appt: any) => {
         // LÓGICA DO TÍTULO:
-        // Se sou cliente, quero ver o Profissional e o Serviço
-        // Se sou Profissional/Admin, quero ver o Cliente e o Serviço
+        // Cliente vê: Serviço + Profissional
+        // Profissional/Admin vê: Cliente + Serviço
         let title = "Agendamento";
 
         if (userRole === "client") {
@@ -62,17 +71,16 @@ const AgendaComponent = () => {
     } catch (error) {
       console.error("Erro ao carregar agenda:", error);
     }
-  }, [date, userRole]); // Recarrega se o role mudar
+  }, [date, userRole]);
 
   useEffect(() => {
     if (userRole) {
-      // Só busca quando soubermos quem é o usuário
       fetchAppointments();
     }
   }, [fetchAppointments, userRole]);
 
   const onEventDrop = async ({ event, start, end }: any) => {
-    // SEGURANÇA VISUAL: Cliente não pode arrastar
+    // Cliente não arrasta
     if (userRole === "client") return;
 
     const originalEvents = [...events];
@@ -84,7 +92,7 @@ const AgendaComponent = () => {
     try {
       await appointmentService.reschedule(event.id, { start, end });
     } catch (error) {
-      alert("Erro ao reagendar.");
+      alert("Erro ao reagendar: " + (error as any).message); // Mostra erro do backend (ex: horário indisponível)
       setEvents(originalEvents);
     }
   };
@@ -107,10 +115,10 @@ const AgendaComponent = () => {
 
   const eventPropGetter = (event: any) => {
     const status = event.resource?.status;
-    let backgroundColor = "#b06075";
+    let backgroundColor = "#b06075"; // Rosa
 
-    if (status === "confirmed") backgroundColor = "#28a745";
-    if (status === "cancelled") backgroundColor = "#dc3545";
+    if (status === "confirmed") backgroundColor = "#28a745"; // Verde
+    if (status === "cancelled") backgroundColor = "#dc3545"; // Vermelho
 
     if (view === Views.MONTH) {
       return { className: styles.eventBlockMonth, style: {} };
@@ -133,12 +141,16 @@ const AgendaComponent = () => {
         onView={setView}
         date={date}
         onNavigate={setDate}
-        // BLOQUEIA ARRASTAR SE FOR CLIENTE
+        // --- LIMITES VISUAIS APLICADOS AQUI ---
+        min={minTime}
+        max={maxTime}
+        // --------------------------------------
+
         draggableAccessor={() => userRole !== "client"}
         components={{ event: CustomEvent }}
         step={30}
         timeslots={2}
-        selectable={userRole !== "client"} // Cliente não clica para criar (por enquanto)
+        selectable={userRole !== "client"}
         resizable={userRole !== "client"}
         onEventDrop={onEventDrop}
         eventPropGetter={eventPropGetter}

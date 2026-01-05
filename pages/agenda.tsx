@@ -3,15 +3,14 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderAuth from "../src/components/common/headerAuth";
 import AgendaComponent from "../src/components/common/agenda";
-import { Container, Spinner } from "reactstrap";
+import { Container, Button, Spinner } from "reactstrap"; // Adicione Button aqui
 import profileService from "../src/services/profileService";
-
-// IMPORTANTE: Importar o novo arquivo de estilos
 import styles from "../styles/agenda.module.scss";
 
 const AgendaPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState(""); // <--- 1. ESTADO PARA GUARDAR O CARGO
 
   useEffect(() => {
     const checkPermission = async () => {
@@ -24,14 +23,7 @@ const AgendaPage = () => {
 
       try {
         const user = await profileService.fetchCurrent();
-
-        /* caso queira bloquear o acesso a tela de agendamentos somente para admin/professional
-         if (user.role !== "admin" && user.role !== "professional") {
-           router.push("/home");
-           return;
-         } */
-
-        await profileService.fetchCurrent();
+        setUserRole(user.role); // <--- 2. SALVA O CARGO
         setLoading(false);
       } catch (error) {
         router.push("/login");
@@ -45,9 +37,9 @@ const AgendaPage = () => {
     return (
       <Container
         className="d-flex justify-content-center align-items-center"
-        style={{ height: "100vh", backgroundColor: "#d48498" }} // Spinner com fundo rosa
+        style={{ height: "100vh", backgroundColor: "#fafafa" }}
       >
-        <Spinner color="light" />
+        <Spinner color="dark" />
       </Container>
     );
   }
@@ -55,23 +47,32 @@ const AgendaPage = () => {
   return (
     <>
       <Head>
-        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
-        <title>Agenda | Espaço Virtuosa</title>
+        <title>Minha Agenda | Espaço Virtuosa</title>
       </Head>
 
-      {/* Aplica o fundo rosa da classe .main */}
       <main className={styles.main}>
         <HeaderAuth />
 
         <Container className="mt-5 pb-5">
           <div className={styles.headerSection}>
-            <h2 className={styles.title}>Minha Agenda Profissional 🌸</h2>
+            <h2 className={styles.title}>Minha Agenda 🌸</h2>
+
+            {/* 3. CONDIÇÃO: SÓ MOSTRA SE NÃO FOR CLIENTE */}
+            {userRole !== "client" && (
+              <Button
+                className={styles.configBtn}
+                onClick={() => router.push("/availability")}
+                title="Configurar Horários"
+              >
+                Configure Seus Horários ⚙️
+              </Button>
+            )}
           </div>
 
           <p className={styles.subtitle}>
-            Visualize e gerencie seus atendimentos. Arraste os cards para
-            reagendar.
+            Visualize seus agendamentos futuros e passados.
           </p>
+
           <AgendaComponent />
         </Container>
       </main>
