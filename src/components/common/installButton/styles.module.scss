@@ -1,0 +1,45 @@
+.installBtn {
+  // --- Estilos Base (Desktop) ---
+  border-color: #b06075 !important;
+  color: #b06075 !important;
+  font-weight: bold !important;
+  margin: 0 0.5rem;
+  transition: all 0.3s ease;
+  white-space: nowrap; // Garante que o texto não quebre linha
+
+  &:hover {
+    background-color: #b06075 !important;
+    color: white !important;
+  }
+
+  // --- MOBILE (Telas menores que 768px) ---
+  @media (max-width: 768px) {
+    // Em vez de "display: none", vamos apenas reduzir o tamanho
+    font-size: 2.75rem !important; // Letra menor (12px)
+    padding: 0.3rem 0.6rem !important; // Botão mais magrinho
+    margin: 0 0.2rem !important; // Menos espaço nas laterais
+    align-items: center;
+    align-content: center;
+    display: flex;
+    justify-content: center;
+    // Dica: Se quiser só o ícone no mobile, descomente as linhas abaixo:
+    // max-width: 40px;
+    // overflow: hidden;
+    // span { display: none; }
+  }
+
+  @media (max-width: 351px) {
+    // Em vez de "display: none", vamos apenas reduzir o tamanho
+    font-size: 1.7rem !important; // Letra menor (12px)
+    padding: 0.3rem 0.6rem !important; // Botão mais magrinho
+    margin: 0 0.2rem !important; // Menos espaço nas laterais
+    align-items: center;
+    align-content: center;
+    display: flex;
+    justify-content: center;
+    // Dica: Se quiser só o ícone no mobile, descomente as linhas abaixo:
+    // max-width: 40px;
+    // overflow: hidden;
+    // span { display: none; }
+  }
+}

@@ -1,21 +1,20 @@
 import { useEffect, useState } from "react";
 import { Button } from "reactstrap";
+import styles from "./styles.module.scss"; // <--- Importação do estilo
 
 const InstallButton = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // 1. Captura o evento antes do navegador disparar
     const handler = (e: any) => {
-      e.preventDefault(); // Impede o banner nativo de aparecer sozinho e sumir
+      e.preventDefault();
       setDeferredPrompt(e);
       setIsReady(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
-    // Verifica se já está instalado
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsReady(false);
     }
@@ -26,7 +25,6 @@ const InstallButton = () => {
   const handleInstallClick = () => {
     if (!deferredPrompt) return;
 
-    // 2. Dispara o prompt quando o usuário clica
     deferredPrompt.prompt();
 
     deferredPrompt.userChoice.then((choiceResult: any) => {
@@ -37,16 +35,14 @@ const InstallButton = () => {
     });
   };
 
-  // Só mostra o botão se o navegador permitir instalação
   if (!isReady) return null;
 
   return (
     <Button
       outline
       color="light"
-      className="ms-2 me-2 fw-bold"
+      className={styles.installBtn} // <--- Classe do SCSS
       onClick={handleInstallClick}
-      style={{ borderColor: "#b06075", color: "#b06075" }}
     >
       📲 Instalar App
     </Button>
