@@ -12,13 +12,13 @@ export interface Company {
 
 const companyService = {
   getCities: async (): Promise<string[]> => {
-    const res = await api.get("/public/cities");
+    const res = await api.get("/cities");
     return res.data;
   },
 
   getCompanies: async (city?: string): Promise<Company[]> => {
     const params = city ? { city } : {};
-    const res = await api.get("/public/companies", { params });
+    const res = await api.get("/companies", { params });
     return res.data;
   },
 };
