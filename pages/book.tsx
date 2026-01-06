@@ -36,14 +36,13 @@ export default function Book() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // --- ESTADOS DE NAVEGAÇÃO (WIZARD) ---
-  const [step, setStep] = useState(1); // 1: Cidade, 2: Empresa, 3: Agendamento
+  // --- ESTADOS ---
+  const [step, setStep] = useState(1);
   const [cities, setCities] = useState<string[]>([]);
   const [selectedCity, setSelectedCity] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
-  // --- ESTADOS DO AGENDAMENTO (ETAPA 3) ---
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
@@ -51,38 +50,26 @@ export default function Book() {
   const [availableSlots, setAvailableSlots] = useState<Date[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Seleções Finais
   const [selectedProf, setSelectedProf] = useState("");
   const [selectedCat, setSelectedCat] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [startDate, setStartDate] = useState(new Date());
 
-  // Toast
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
 
-  // =========================================================================
-  // HELPER: CORREÇÃO DE IMAGENS (WINDOWS PATH FIX)
-  // =========================================================================
+  // HELPER IMAGEM
   const getImageUrl = (path: string) => {
-    if (!path) return "/placeholder.png"; // Imagem padrão se não houver foto
-
-    // 1. Substitui barras invertidas do Windows (\) por barras normais (/)
+    if (!path) return "/placeholder.png";
     const cleanPath = path.replace(/\\/g, "/");
-
-    // 2. Remove barra inicial se existir para evitar "//"
     const finalPath = cleanPath.startsWith("/")
       ? cleanPath.substring(1)
       : cleanPath;
-
-    // Use a variável que funcionou para você (API_URL)
     return `${process.env.NEXT_PUBLIC_BASE_URL}/${finalPath}`;
   };
 
-  // =========================================================================
-  // ETAPA 1: CARREGAR CIDADES
-  // =========================================================================
+  // LOGICA (Mantida)
   useEffect(() => {
     const loadCities = async () => {
       try {
@@ -90,7 +77,7 @@ export default function Book() {
         const data = await companyService.getCities();
         setCities(data);
       } catch (error) {
-        showToast("error", "Erro ao carregar cidades disponíveis.");
+        showToast("error", "Erro ao carregar cidades.");
       } finally {
         setLoading(false);
       }
@@ -106,7 +93,7 @@ export default function Book() {
       try {
         const data = await companyService.getCompanies(city);
         setCompanies(data);
-        setStep(2); // Avança para etapa 2
+        setStep(2);
       } catch (error) {
         showToast("error", "Erro ao buscar empresas.");
       } finally {
@@ -115,17 +102,11 @@ export default function Book() {
     }
   };
 
-  // =========================================================================
-  // ETAPA 2: SELECIONAR EMPRESA
-  // =========================================================================
   const handleCompanySelect = (company: Company) => {
     setSelectedCompany(company);
-    setStep(3); // Avança para o agendamento
+    setStep(3);
   };
 
-  // =========================================================================
-  // ETAPA 3: CARREGAR PROFISSIONAIS DA EMPRESA SELECIONADA
-  // =========================================================================
   useEffect(() => {
     if (step === 3 && selectedCompany) {
       const loadProfessionals = async () => {
@@ -134,12 +115,11 @@ export default function Book() {
           const profsData = await professionalService.getAll(
             selectedCompany.id
           );
-
           setProfessionals(
             Array.isArray(profsData) ? profsData : profsData.rows || []
           );
         } catch (err) {
-          showToast("error", "Erro ao carregar profissionais desta empresa.");
+          showToast("error", "Erro ao carregar profissionais.");
         } finally {
           setLoading(false);
         }
@@ -166,9 +146,7 @@ export default function Book() {
       }
       availabilityService
         .getByProfessionalId(Number(selectedProf))
-        .then((data: any) => {
-          setAvailability(data);
-        });
+        .then((data: any) => setAvailability(data));
     } else {
       setCategories([]);
       setAvailability([]);
@@ -207,7 +185,6 @@ export default function Book() {
           const slotsDate = slotsStr.map((s: string) => parseISO(s));
           setAvailableSlots(slotsDate);
         } catch (error) {
-          console.error("Erro ao buscar slots", error);
           setAvailableSlots([]);
         } finally {
           setLoadingSlots(false);
@@ -233,7 +210,7 @@ export default function Book() {
 
   const handleBook = async () => {
     if (!selectedProf || !selectedService || !startDate) {
-      showToast("error", "Por favor, preencha todos os campos.");
+      showToast("error", "Preencha todos os campos.");
       return;
     }
     try {
@@ -242,10 +219,8 @@ export default function Book() {
         Number(selectedService),
         startDate
       );
-      showToast("success", "Agendamento realizado com sucesso!");
-      setTimeout(() => {
-        router.push("/home");
-      }, 2000);
+      showToast("success", "Agendamento realizado!");
+      setTimeout(() => router.push("/home"), 2000);
     } catch (err: any) {
       showToast("error", err.response?.data?.message || "Erro ao agendar.");
     }
@@ -254,58 +229,63 @@ export default function Book() {
   return (
     <>
       <Head>
-        <title>Novo Agendamento - Espaço Virtuosa</title>
-        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
+        <title>Agendamento | Espaço Virtuosa</title>
       </Head>
       <main className={styles.main}>
         <HeaderAuth />
 
-        {/* HERO SECTION DINÂMICO */}
+        {/* HERO */}
         <div className={styles.heroBook}>
-          <Container>
-            {step === 1 && (
-              <>
-                <h2 className={styles.nameTitle}>🌸 Espaço Virtuosa 🌸</h2>
-                <h2 className={styles.title}>Onde você está localizada?</h2>
-                <p className={styles.subtitle}>
-                  Escolha sua cidade e selecione sua profissional.
-                </p>
-              </>
-            )}
-            {step === 2 && (
-              <>
-                <h2 className={styles.title}>Escolha a Unidade</h2>
-                <p className={styles.subtitle}>
-                  Encontramos estas opções em {selectedCity}.
-                </p>
-              </>
-            )}
-            {step === 3 && selectedCompany && (
-              <>
-                <h2 className={styles.title}>{selectedCompany.name}</h2>
-                <p className={styles.subtitle}>
-                  {selectedCompany.street}, {selectedCompany.number} -{" "}
-                  {selectedCompany.district}
-                </p>
-              </>
-            )}
-          </Container>
+          <div className={styles.heroOverlay}>
+            <Container className="text-center">
+              <h1 className={styles.heroTitle}>Sua Beleza, Nossa Arte</h1>
+              <p className={styles.heroSubtitle}>
+                {step === 1 && "Vamos começar? Onde você está?"}
+                {step === 2 && `Unidades em ${selectedCity}`}
+                {step === 3 && selectedCompany && selectedCompany.name}
+              </p>
+
+              {/* STEPPER */}
+              <div className={styles.stepper}>
+                <div
+                  className={`${styles.step} ${step >= 1 ? styles.active : ""}`}
+                >
+                  1
+                </div>
+                <div className={styles.line}></div>
+                <div
+                  className={`${styles.step} ${step >= 2 ? styles.active : ""}`}
+                >
+                  2
+                </div>
+                <div className={styles.line}></div>
+                <div
+                  className={`${styles.step} ${step >= 3 ? styles.active : ""}`}
+                >
+                  3
+                </div>
+              </div>
+            </Container>
+          </div>
         </div>
 
-        <Container className="py-5" style={{ minHeight: "50vh" }}>
-          {/* ================= ETAPA 1: CIDADE ================= */}
+        <Container
+          className="py-5"
+          style={{ minHeight: "60vh", position: "relative", zIndex: 10 }}
+        >
+          {/* ETAPA 1: CIDADE */}
           {step === 1 && (
-            <div className="d-flex justify-content-center">
-              <div className="col-md-6">
+            <div className={styles.fadeIn}>
+              <div className={styles.cardFloating}>
+                <h3 className={styles.sectionTitle}>Selecione sua Cidade</h3>
                 <FormGroup>
-                  <Label className={styles.labelDark}>Selecione a Cidade</Label>
                   <Input
                     type="select"
-                    className={styles.selectLg}
+                    className={styles.elegantSelect}
                     value={selectedCity}
                     onChange={handleCitySelect}
                   >
-                    <option value="">Selecione...</option>
+                    <option value="">Clique para escolher...</option>
                     {cities.map((city) => (
                       <option key={city} value={city}>
                         {city}
@@ -314,268 +294,231 @@ export default function Book() {
                   </Input>
                 </FormGroup>
                 {loading && (
-                  <div className="text-center mt-3">
-                    <Spinner color="primary" />
+                  <div className="text-center mt-4">
+                    <Spinner color="dark" />
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* ================= ETAPA 2: EMPRESAS (CARDS VERTICAIS) ================= */}
+          {/* ETAPA 2: EMPRESAS */}
           {step === 2 && (
-            <div>
-              <Button
-                color="link"
-                onClick={() => setStep(1)}
-                className="mb-3 ps-0 text-decoration-none text-muted"
-              >
-                &larr; Voltar para cidades
-              </Button>
+            <div className={styles.fadeIn}>
+              {/* BARRA DE CONTROLE FLUTUANTE (Resolve o problema do botão cortado) */}
+              <div className={styles.controlBar}>
+                <Button
+                  color="link"
+                  onClick={() => setStep(1)}
+                  className={styles.backLink}
+                >
+                  &larr; Voltar
+                </Button>
+                <span className="text-muted small fw-bold">
+                  {companies.length} Unidades encontradas
+                </span>
+              </div>
 
               {loading ? (
-                <div className="text-center">
-                  <Spinner color="primary" />
+                <div className="text-center py-5">
+                  <Spinner color="dark" />
                 </div>
               ) : (
-                <Row>
+                <Row className="g-3">
+                  {" "}
+                  {/* g-3 ajusta o espaçamento entre colunas */}
                   {companies.map((company) => (
-                    // md={3} = 4 cards por linha em desktop (Mais estreito)
-                    <Col
-                      xs={12}
-                      sm={6}
-                      md={3}
-                      key={company.id}
-                      className="mb-4"
-                    >
+                    // AQUI ESTÁ A MÁGICA: xs={6} coloca 2 cards por linha no celular
+                    <Col xs={6} sm={6} md={3} key={company.id}>
                       <Card
-                        className="h-100 shadow-sm border-0 cursor-pointer"
-                        style={{
-                          cursor: "pointer",
-                          transition: "transform 0.2s",
-                          overflow: "hidden", // Arredonda a imagem junto com o card
-                        }}
+                        className={styles.companyCard}
                         onClick={() => handleCompanySelect(company)}
-                        onMouseOver={(e) =>
-                          (e.currentTarget.style.transform = "translateY(-5px)")
-                        }
-                        onMouseOut={(e) =>
-                          (e.currentTarget.style.transform = "translateY(0)")
-                        }
                       >
-                        <div
-                          style={{
-                            height: "320px", // ALTURA DE RETRATO
-                            overflow: "hidden",
-                            backgroundColor: "#f8f9fa",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
+                        <div className={styles.cardImageWrapper}>
                           {company.thumbnailUrl ? (
                             <img
                               src={getImageUrl(company.thumbnailUrl)}
                               alt={company.name}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover", // PREENCHE O RETÂNGULO
-                                objectPosition: "top center", // FOCA NO ROSTO
-                              }}
+                              className={styles.cardImage}
                               onError={(e) => {
                                 e.currentTarget.src =
-                                  "https://via.placeholder.com/300x400?text=Sem+Foto";
+                                  "https://via.placeholder.com/300x400?text=Virtuosa";
                               }}
                             />
                           ) : (
-                            <span className="text-muted">Sem Foto</span>
+                            <div className={styles.noImage}>Virtuosa</div>
                           )}
                         </div>
-                        <CardBody className="text-center">
-                          <CardTitle tag="h5" className="fw-bold text-dark">
+                        <CardBody
+                          className={`${styles.cardBodyCompact} text-center`}
+                        >
+                          <CardTitle tag="h6" className={styles.cardTitle}>
                             {company.name}
                           </CardTitle>
-                          <CardSubtitle className="mb-2 text-muted small">
-                            {company.street}, {company.number}
-                            <br />
+                          <CardSubtitle className={styles.cardSubtitle}>
                             {company.district}
                           </CardSubtitle>
-                          <Button
-                            color="primary"
-                            outline
-                            block
-                            size="sm"
-                            className="mt-3 rounded-pill"
-                          >
-                            Ver Agenda
+                          {/* Botão menor e mais compacto para mobile */}
+                          <Button className={styles.btnOutlineCompact}>
+                            Ver
                           </Button>
                         </CardBody>
                       </Card>
                     </Col>
                   ))}
                   {companies.length === 0 && (
-                    <p className="text-center">
-                      Nenhuma empresa encontrada nesta cidade.
-                    </p>
+                    <div className="text-center text-muted py-5 col-12">
+                      <p>Nenhuma unidade encontrada nesta cidade.</p>
+                    </div>
                   )}
                 </Row>
               )}
             </div>
           )}
 
-          {/* ================= ETAPA 3: AGENDAMENTO (FORMULÁRIO) ================= */}
+          {/* ETAPA 3: AGENDAMENTO */}
           {step === 3 && (
-            <div className="d-flex justify-content-center">
-              <div className={`col-md-8 col-lg-6 ${styles.containerForm}`}>
-                <Button
-                  color="link"
-                  onClick={() => {
-                    setStep(2);
-                    setProfessionals([]);
-                    setAvailability([]);
-                  }}
-                  className="mb-3 ps-0 text-decoration-none text-muted"
-                >
-                  &larr; Trocar de Unidade
-                </Button>
+            <div className={styles.fadeIn}>
+              <div className="d-flex justify-content-center">
+                <div className={styles.cardFloatingLarge}>
+                  <Button
+                    color="link"
+                    onClick={() => {
+                      setStep(2);
+                      setProfessionals([]);
+                    }}
+                    className={styles.backLink}
+                  >
+                    &larr; Voltar
+                  </Button>
 
-                {loading ? (
-                  <div className="text-center py-5">
-                    <Spinner color="secondary" />
-                  </div>
-                ) : (
-                  <Form>
-                    {/* 1. SELECIONA PROFISSIONAL */}
-                    <FormGroup>
-                      <Label className={styles.label}>Profissional</Label>
-                      <Input
-                        type="select"
-                        className={styles.select}
-                        value={selectedProf}
-                        onChange={(e) => setSelectedProf(e.target.value)}
-                      >
-                        <option value="">Quem vai te atender?</option>
-                        {professionals.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.firstName} {p.lastName}
-                          </option>
-                        ))}
-                      </Input>
-                    </FormGroup>
+                  <h3 className={styles.sectionTitle}>Detalhes</h3>
 
-                    {/* 2. CATEGORIA */}
-                    <FormGroup>
-                      <Label className={styles.label}>Categoria</Label>
-                      <Input
-                        type="select"
-                        className={styles.select}
-                        value={selectedCat}
-                        onChange={(e) => setSelectedCat(e.target.value)}
-                        disabled={!selectedProf}
-                      >
-                        <option value="">
-                          {selectedProf
-                            ? "O que deseja fazer?"
-                            : "Selecione um profissional primeiro"}
-                        </option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </Input>
-                    </FormGroup>
+                  {loading ? (
+                    <div className="text-center py-5">
+                      <Spinner color="dark" />
+                    </div>
+                  ) : (
+                    <Form className="mt-4">
+                      <Row>
+                        <Col md={6}>
+                          <FormGroup>
+                            <Label className={styles.labelElegant}>
+                              Profissional
+                            </Label>
+                            <Input
+                              type="select"
+                              className={styles.elegantSelect}
+                              value={selectedProf}
+                              onChange={(e) => setSelectedProf(e.target.value)}
+                            >
+                              <option value="">Selecione...</option>
+                              {professionals.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.firstName} {p.lastName}
+                                </option>
+                              ))}
+                            </Input>
+                          </FormGroup>
+                        </Col>
+                        <Col md={6}>
+                          <FormGroup>
+                            <Label className={styles.labelElegant}>
+                              Categoria
+                            </Label>
+                            <Input
+                              type="select"
+                              className={styles.elegantSelect}
+                              value={selectedCat}
+                              onChange={(e) => setSelectedCat(e.target.value)}
+                              disabled={!selectedProf}
+                            >
+                              <option value="">Selecione...</option>
+                              {categories.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </Input>
+                          </FormGroup>
+                        </Col>
+                      </Row>
 
-                    {/* 3. SERVIÇO */}
-                    <FormGroup>
-                      <Label className={styles.label}>Serviço</Label>
-                      <Input
-                        type="select"
-                        className={styles.select}
-                        value={selectedService}
-                        onChange={(e) => setSelectedService(e.target.value)}
-                        disabled={!selectedCat}
-                      >
-                        <option value="">
-                          {selectedCat
-                            ? "Escolha o serviço"
-                            : "Selecione a categoria"}
-                        </option>
-                        {services.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name} - R$ {Number(s.price).toFixed(2)}
-                          </option>
-                        ))}
-                      </Input>
-                    </FormGroup>
+                      <FormGroup>
+                        <Label className={styles.labelElegant}>Serviço</Label>
+                        <Input
+                          type="select"
+                          className={styles.elegantSelect}
+                          value={selectedService}
+                          onChange={(e) => setSelectedService(e.target.value)}
+                          disabled={!selectedCat}
+                        >
+                          <option value="">Selecione...</option>
+                          {services.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name} - R$ {Number(s.price).toFixed(2)}
+                            </option>
+                          ))}
+                        </Input>
+                      </FormGroup>
 
-                    {/* 4. DATA E HORA */}
-                    <FormGroup>
-                      <Label className={styles.label}>
-                        Data e Hora
-                        {loadingSlots && (
-                          <Spinner
-                            size="sm"
-                            color="secondary"
-                            className="ms-2"
+                      <FormGroup>
+                        <Label className={styles.labelElegant}>
+                          Data e Hora
+                        </Label>
+                        <div className={styles.datePickerContainer}>
+                          <DatePicker
+                            selected={startDate}
+                            onChange={(date: Date | null) => {
+                              if (date) setStartDate(date);
+                            }}
+                            showTimeSelect
+                            includeTimes={availableSlots}
+                            timeCaption="Horas"
+                            timeIntervals={30}
+                            dateFormat="dd/MM/yyyy - HH:mm"
+                            locale="pt-BR"
+                            className={styles.elegantInput}
+                            minDate={new Date()}
+                            filterDate={isDateAvailable}
+                            disabled={!selectedService}
+                            placeholderText={
+                              !selectedService
+                                ? "Selecione o serviço"
+                                : "Escolha a data"
+                            }
                           />
-                        )}
-                      </Label>
-                      <div className={styles.datePickerWrapper}>
-                        <DatePicker
-                          selected={startDate}
-                          onChange={(date: Date | null) => {
-                            if (date) setStartDate(date);
-                          }}
-                          showTimeSelect
-                          includeTimes={availableSlots}
-                          timeCaption={
-                            loadingSlots ? "Carregando..." : "Horários"
-                          }
-                          timeIntervals={30}
-                          dateFormat="dd/MM/yyyy - HH:mm"
-                          locale="pt-BR"
-                          className={styles.input}
-                          minDate={new Date()}
-                          filterDate={isDateAvailable}
-                          disabled={!selectedService}
-                          placeholderText={
-                            !selectedService
-                              ? "Selecione o serviço primeiro"
-                              : "Escolha um horário disponível"
-                          }
-                        />
-                      </div>
-
-                      {/* Avisos */}
-                      {selectedProf && availability.length === 0 && (
-                        <small className="text-danger mt-1 d-block">
-                          Este profissional ainda não configurou horários.
-                        </small>
-                      )}
-                      {selectedService &&
-                        !loadingSlots &&
-                        availableSlots.length === 0 && (
-                          <small className="text-warning mt-1 d-block">
-                            Nenhum horário disponível nesta data.
+                        </div>
+                        {loadingSlots && (
+                          <small className="text-muted d-block mt-1">
+                            Buscando horários...
                           </small>
                         )}
-                    </FormGroup>
+                        {selectedService &&
+                          !loadingSlots &&
+                          availableSlots.length === 0 && (
+                            <small className="text-warning mt-2 d-block">
+                              Sem horários para hoje.
+                            </small>
+                          )}
+                      </FormGroup>
 
-                    <Button
-                      className={styles.btnSubmit}
-                      onClick={handleBook}
-                      disabled={
-                        !selectedProf ||
-                        !selectedService ||
-                        availableSlots.length === 0
-                      }
-                    >
-                      Confirmar Agendamento
-                    </Button>
-                  </Form>
-                )}
+                      <div className="text-center mt-4">
+                        <Button
+                          className={styles.btnGold}
+                          onClick={handleBook}
+                          disabled={
+                            !selectedProf ||
+                            !selectedService ||
+                            availableSlots.length === 0
+                          }
+                        >
+                          Agendar
+                        </Button>
+                      </div>
+                    </Form>
+                  )}
+                </div>
               </div>
             </div>
           )}
