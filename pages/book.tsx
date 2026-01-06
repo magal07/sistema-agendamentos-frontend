@@ -360,7 +360,7 @@ export default function Book() {
                           </CardSubtitle>
                           {/* Botão menor e mais compacto para mobile */}
                           <Button className={styles.btnOutlineCompact}>
-                            Ver
+                            Ver Agenda
                           </Button>
                         </CardBody>
                       </Card>
