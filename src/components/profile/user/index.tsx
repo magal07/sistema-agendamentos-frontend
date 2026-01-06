@@ -4,7 +4,6 @@ import { Button, Form, FormGroup, Input, Label } from "reactstrap";
 import styles from "../../../../styles/profile.module.scss";
 import profileService from "../../../services/profileService";
 import ToastComponent from "../../common/toast";
-import Cookies from "js-cookie"; // <--- Adicione esta importação
 
 const UserForm = function () {
   const router = useRouter();
@@ -50,7 +49,6 @@ const UserForm = function () {
 
         // Se mudou o e-mail, faz logout para forçar novo login
         if (email !== initialEmail) {
-          Cookies.remove("token"); // Remove o Cookie
           localStorage.clear(); // Limpa dados locais
           sessionStorage.clear();
           router.push("/");

@@ -8,7 +8,6 @@ import PageSpinner from "../src/components/common/spinner";
 import PasswordForm from "../src/components/profile/password";
 import UserForm from "../src/components/profile/user";
 import styles from "../styles/profile.module.scss";
-import Cookies from "js-cookie"; // <--- Importante
 
 const UserInfo = function () {
   const [form, setForm] = useState("userForm");
@@ -16,8 +15,9 @@ const UserInfo = function () {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // CORREÇÃO: Verifica o Cookie 'token' em vez do sessionStorage antigo
-    if (!Cookies.get("token")) {
+    const token = sessionStorage.getItem("onebitflix-token");
+
+    if (!token) {
       router.push("/login");
     } else {
       setLoading(false);
