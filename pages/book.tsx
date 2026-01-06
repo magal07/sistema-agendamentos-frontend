@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import {
   Container,
   Form,
@@ -8,6 +8,12 @@ import {
   Input,
   Button,
   Spinner,
+  Card,
+  CardBody,
+  CardTitle,
+  CardSubtitle,
+  Row,
+  Col,
 } from "reactstrap";
 import HeaderAuth from "../src/components/common/headerAuth";
 import Footer from "../src/components/common/footer";
@@ -21,61 +27,130 @@ import { parseISO } from "date-fns";
 import { appointmentService } from "../src/services/appointmentService";
 import { professionalService } from "../src/services/professionalService";
 import availabilityService from "../src/services/availabilityService";
+import companyService, { Company } from "../src/services/companyService";
 import ToastComponent from "../src/components/common/toast";
 
 registerLocale("pt-BR", ptBR);
 
 export default function Book() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Estados para o Toast
-  const [toastIsOpen, setToastIsOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  // --- ESTADOS DE NAVEGAÇÃO (WIZARD) ---
+  const [step, setStep] = useState(1); // 1: Cidade, 2: Empresa, 3: Agendamento
+  const [cities, setCities] = useState<string[]>([]);
+  const [selectedCity, setSelectedCity] = useState("");
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
-  // Dados Gerais
+  // --- ESTADOS DO AGENDAMENTO (ETAPA 3) ---
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
-
-  // Disponibilidade Geral (Para bloquear dias da semana inteiros, ex: Domingo)
   const [availability, setAvailability] = useState<any[]>([]);
-
-  // Disponibilidade Específica (Horários calculados pelo backend)
   const [availableSlots, setAvailableSlots] = useState<Date[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Seleções
+  // Seleções Finais
   const [selectedProf, setSelectedProf] = useState("");
   const [selectedCat, setSelectedCat] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [startDate, setStartDate] = useState(new Date());
 
-  // 1. Carrega Profissionais
+  // Toast
+  const [toastIsOpen, setToastIsOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+
+  // =========================================================================
+  // HELPER: CORREÇÃO DE IMAGENS (WINDOWS PATH FIX)
+  // =========================================================================
+  const getImageUrl = (path: string) => {
+    if (!path) return "/placeholder.png"; // Imagem padrão se não houver foto
+
+    // 1. Substitui barras invertidas do Windows (\) por barras normais (/)
+    const cleanPath = path.replace(/\\/g, "/");
+
+    // 2. Remove barra inicial se existir para evitar "//"
+    const finalPath = cleanPath.startsWith("/")
+      ? cleanPath.substring(1)
+      : cleanPath;
+
+    // Use a variável que funcionou para você (API_URL)
+    return `${process.env.NEXT_PUBLIC_BASE_URL}/${finalPath}`;
+  };
+
+  // =========================================================================
+  // ETAPA 1: CARREGAR CIDADES
+  // =========================================================================
   useEffect(() => {
-    const loadData = async () => {
+    const loadCities = async () => {
       try {
         setLoading(true);
-        const profsData = await professionalService.getAll();
-        setProfessionals(
-          Array.isArray(profsData) ? profsData : profsData.rows || []
-        );
-      } catch (err) {
-        showToast("error", "Erro ao carregar profissionais.");
+        const data = await companyService.getCities();
+        setCities(data);
+      } catch (error) {
+        showToast("error", "Erro ao carregar cidades disponíveis.");
       } finally {
         setLoading(false);
       }
     };
-    loadData();
+    loadCities();
   }, []);
 
-  // 2. Quando mudar Profissional: Filtra Categorias E Busca Disponibilidade Geral (Dias da semana)
+  const handleCitySelect = async (e: any) => {
+    const city = e.target.value;
+    setSelectedCity(city);
+    if (city) {
+      setLoading(true);
+      try {
+        const data = await companyService.getCompanies(city);
+        setCompanies(data);
+        setStep(2); // Avança para etapa 2
+      } catch (error) {
+        showToast("error", "Erro ao buscar empresas.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // =========================================================================
+  // ETAPA 2: SELECIONAR EMPRESA
+  // =========================================================================
+  const handleCompanySelect = (company: Company) => {
+    setSelectedCompany(company);
+    setStep(3); // Avança para o agendamento
+  };
+
+  // =========================================================================
+  // ETAPA 3: CARREGAR PROFISSIONAIS DA EMPRESA SELECIONADA
+  // =========================================================================
+  useEffect(() => {
+    if (step === 3 && selectedCompany) {
+      const loadProfessionals = async () => {
+        try {
+          setLoading(true);
+          const profsData = await professionalService.getAll(
+            selectedCompany.id
+          );
+
+          setProfessionals(
+            Array.isArray(profsData) ? profsData : profsData.rows || []
+          );
+        } catch (err) {
+          showToast("error", "Erro ao carregar profissionais desta empresa.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadProfessionals();
+    }
+  }, [step, selectedCompany]);
+
   useEffect(() => {
     if (selectedProf) {
       const prof = professionals.find((p) => p.id.toString() === selectedProf);
-
-      // A) Filtra categorias
       if (prof && prof.services) {
         const uniqueCategories = prof.services.reduce(
           (acc: any[], current: any) => {
@@ -89,8 +164,6 @@ export default function Book() {
       } else {
         setCategories([]);
       }
-
-      // B) Busca disponibilidade GERAL (apenas para saber quais dias da semana pintar de cinza)
       availabilityService
         .getByProfessionalId(Number(selectedProf))
         .then((data: any) => {
@@ -100,15 +173,12 @@ export default function Book() {
       setCategories([]);
       setAvailability([]);
     }
-
-    // Reseta campos
     setSelectedCat("");
     setSelectedService("");
     setServices([]);
     setAvailableSlots([]);
   }, [selectedProf, professionals]);
 
-  // 3. Filtra Serviços
   useEffect(() => {
     if (selectedCat && selectedProf) {
       const prof = professionals.find((p) => p.id.toString() === selectedProf);
@@ -124,21 +194,16 @@ export default function Book() {
     setSelectedService("");
   }, [selectedCat, selectedProf, professionals]);
 
-  // 4. NOVO: Busca SLOTS Disponíveis (Horários exatos)
-  // Dispara quando muda a data, o profissional ou o serviço
   useEffect(() => {
     const fetchSlots = async () => {
       if (selectedProf && selectedService && startDate) {
         setLoadingSlots(true);
         try {
-          // O backend retorna array de strings: ["2023-10-01 08:00", "2023-10-01 08:30"]
           const slotsStr = await availabilityService.getAvailableSlots(
             Number(selectedProf),
             Number(selectedService),
             startDate
           );
-
-          // Convertemos para objetos Date que o DatePicker entende
           const slotsDate = slotsStr.map((s: string) => parseISO(s));
           setAvailableSlots(slotsDate);
         } catch (error) {
@@ -149,22 +214,16 @@ export default function Book() {
         }
       }
     };
-
     fetchSlots();
   }, [startDate, selectedProf, selectedService]);
 
-  // --- REGRAS VISUAIS ---
-
-  // A. Bloqueia dias da semana inteiros (ex: Profissional não trabalha Domingo)
   const isDateAvailable = (date: Date) => {
     if (!selectedProf) return false;
     if (availability.length === 0) return true;
-
     const dayOfWeek = date.getDay();
     return availability.some((a) => a.dayOfWeek === dayOfWeek);
   };
 
-  // Helper Toast
   const showToast = (type: "success" | "error", msg: string) => {
     setToastType(type);
     setToastMessage(msg);
@@ -177,14 +236,12 @@ export default function Book() {
       showToast("error", "Por favor, preencha todos os campos.");
       return;
     }
-
     try {
       await appointmentService.create(
         Number(selectedProf),
         Number(selectedService),
         startDate
       );
-
       showToast("success", "Agendamento realizado com sucesso!");
       setTimeout(() => {
         router.push("/home");
@@ -203,169 +260,328 @@ export default function Book() {
       <main className={styles.main}>
         <HeaderAuth />
 
+        {/* HERO SECTION DINÂMICO */}
         <div className={styles.heroBook}>
           <Container>
-            <h2 className={styles.title}>Agende seu Horário</h2>
-            <p className={styles.subtitle}>
-              Personalize seu atendimento escolhendo seu profissional favorito.
-            </p>
+            {step === 1 && (
+              <>
+                <h2 className={styles.nameTitle}>🌸 Espaço Virtuosa 🌸</h2>
+                <h2 className={styles.title}>Onde você está localizada?</h2>
+                <p className={styles.subtitle}>
+                  Escolha sua cidade e selecione sua profissional.
+                </p>
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <h2 className={styles.title}>Escolha a Unidade</h2>
+                <p className={styles.subtitle}>
+                  Encontramos estas opções em {selectedCity}.
+                </p>
+              </>
+            )}
+            {step === 3 && selectedCompany && (
+              <>
+                <h2 className={styles.title}>{selectedCompany.name}</h2>
+                <p className={styles.subtitle}>
+                  {selectedCompany.street}, {selectedCompany.number} -{" "}
+                  {selectedCompany.district}
+                </p>
+              </>
+            )}
           </Container>
         </div>
 
-        <Container className="d-flex justify-content-center">
-          <div className={`col-md-8 col-lg-6 ${styles.containerForm}`}>
-            {loading ? (
-              <div className="text-center py-5">
-                <Spinner color="secondary" />
-              </div>
-            ) : (
-              <Form>
-                {/* 1. SELECIONA PROFISSIONAL */}
+        <Container className="py-5" style={{ minHeight: "50vh" }}>
+          {/* ================= ETAPA 1: CIDADE ================= */}
+          {step === 1 && (
+            <div className="d-flex justify-content-center">
+              <div className="col-md-6">
                 <FormGroup>
-                  <Label className={styles.label}>Profissional</Label>
+                  <Label className={styles.labelDark}>Selecione a Cidade</Label>
                   <Input
                     type="select"
-                    className={styles.select}
-                    value={selectedProf}
-                    onChange={(e) => setSelectedProf(e.target.value)}
+                    className={styles.selectLg}
+                    value={selectedCity}
+                    onChange={handleCitySelect}
                   >
-                    <option value="">Quem vai te atender?</option>
-                    {professionals.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.firstName} {p.lastName}
+                    <option value="">Selecione...</option>
+                    {cities.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
                       </option>
                     ))}
                   </Input>
                 </FormGroup>
-
-                {/* 2. CATEGORIA */}
-                <FormGroup>
-                  <Label className={styles.label}>Categoria</Label>
-                  <Input
-                    type="select"
-                    className={styles.select}
-                    value={selectedCat}
-                    onChange={(e) => setSelectedCat(e.target.value)}
-                    disabled={!selectedProf}
-                  >
-                    <option value="">
-                      {selectedProf
-                        ? "O que deseja fazer?"
-                        : "Selecione um profissional primeiro"}
-                    </option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Input>
-                </FormGroup>
-
-                {/* 3. SERVIÇO */}
-                <FormGroup>
-                  <Label className={styles.label}>Serviço</Label>
-                  <Input
-                    type="select"
-                    className={styles.select}
-                    value={selectedService}
-                    onChange={(e) => setSelectedService(e.target.value)}
-                    disabled={!selectedCat}
-                  >
-                    <option value="">
-                      {selectedCat
-                        ? "Escolha o serviço"
-                        : "Selecione a categoria"}
-                    </option>
-                    {services.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} - R$ {Number(s.price).toFixed(2)}
-                      </option>
-                    ))}
-                  </Input>
-                </FormGroup>
-
-                {/* 4. DATA E HORA (COM SLOTS INTELIGENTES) */}
-                <FormGroup>
-                  <Label className={styles.label}>
-                    Data e Hora
-                    {loadingSlots && (
-                      <Spinner size="sm" color="secondary" className="ms-2" />
-                    )}
-                  </Label>
-                  <div className={styles.datePickerWrapper}>
-                    <DatePicker
-                      selected={startDate}
-                      onChange={(date: Date | null) => {
-                        if (date) setStartDate(date);
-                      }}
-                      showTimeSelect
-                      // --- AQUI ESTÁ A MUDANÇA PRINCIPAL ---
-                      // Em vez de minTime/maxTime, usamos includeTimes
-                      // Isso faz o DatePicker mostrar APENAS os horários da lista availableSlots
-                      includeTimes={availableSlots}
-                      timeCaption={loadingSlots ? "Carregando..." : "Horários"}
-                      timeIntervals={30} // Intervalo visual, o includeTimes tem prioridade
-                      dateFormat="dd/MM/yyyy - HH:mm"
-                      locale="pt-BR"
-                      className={styles.input}
-                      minDate={new Date()} // Não agendar passado
-                      // Mantemos o filtro de dias da semana para visualmente bloquear domingos
-                      filterDate={isDateAvailable}
-                      // Só libera se tiver serviço (precisamos da duração)
-                      disabled={!selectedService}
-                      placeholderText={
-                        !selectedService
-                          ? "Selecione o serviço primeiro"
-                          : "Escolha um horário disponível"
-                      }
-                    />
+                {loading && (
+                  <div className="text-center mt-3">
+                    <Spinner color="primary" />
                   </div>
+                )}
+              </div>
+            </div>
+          )}
 
-                  {/* Mensagens de feedback */}
-                  {selectedProf && availability.length === 0 && (
-                    <small className="text-danger mt-1 d-block">
-                      Este profissional ainda não configurou horários.
-                    </small>
+          {/* ================= ETAPA 2: EMPRESAS (CARDS VERTICAIS) ================= */}
+          {step === 2 && (
+            <div>
+              <Button
+                color="link"
+                onClick={() => setStep(1)}
+                className="mb-3 ps-0 text-decoration-none text-muted"
+              >
+                &larr; Voltar para cidades
+              </Button>
+
+              {loading ? (
+                <div className="text-center">
+                  <Spinner color="primary" />
+                </div>
+              ) : (
+                <Row>
+                  {companies.map((company) => (
+                    // md={3} = 4 cards por linha em desktop (Mais estreito)
+                    <Col
+                      xs={12}
+                      sm={6}
+                      md={3}
+                      key={company.id}
+                      className="mb-4"
+                    >
+                      <Card
+                        className="h-100 shadow-sm border-0 cursor-pointer"
+                        style={{
+                          cursor: "pointer",
+                          transition: "transform 0.2s",
+                          overflow: "hidden", // Arredonda a imagem junto com o card
+                        }}
+                        onClick={() => handleCompanySelect(company)}
+                        onMouseOver={(e) =>
+                          (e.currentTarget.style.transform = "translateY(-5px)")
+                        }
+                        onMouseOut={(e) =>
+                          (e.currentTarget.style.transform = "translateY(0)")
+                        }
+                      >
+                        <div
+                          style={{
+                            height: "320px", // ALTURA DE RETRATO
+                            overflow: "hidden",
+                            backgroundColor: "#f8f9fa",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {company.thumbnailUrl ? (
+                            <img
+                              src={getImageUrl(company.thumbnailUrl)}
+                              alt={company.name}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover", // PREENCHE O RETÂNGULO
+                                objectPosition: "top center", // FOCA NO ROSTO
+                              }}
+                              onError={(e) => {
+                                e.currentTarget.src =
+                                  "https://via.placeholder.com/300x400?text=Sem+Foto";
+                              }}
+                            />
+                          ) : (
+                            <span className="text-muted">Sem Foto</span>
+                          )}
+                        </div>
+                        <CardBody className="text-center">
+                          <CardTitle tag="h5" className="fw-bold text-dark">
+                            {company.name}
+                          </CardTitle>
+                          <CardSubtitle className="mb-2 text-muted small">
+                            {company.street}, {company.number}
+                            <br />
+                            {company.district}
+                          </CardSubtitle>
+                          <Button
+                            color="primary"
+                            outline
+                            block
+                            size="sm"
+                            className="mt-3 rounded-pill"
+                          >
+                            Ver Agenda
+                          </Button>
+                        </CardBody>
+                      </Card>
+                    </Col>
+                  ))}
+                  {companies.length === 0 && (
+                    <p className="text-center">
+                      Nenhuma empresa encontrada nesta cidade.
+                    </p>
                   )}
-                  {selectedService &&
-                    !loadingSlots &&
-                    availableSlots.length === 0 && (
-                      <small className="text-warning mt-1 d-block">
-                        Nenhum horário disponível nesta data. Tente outro dia.
-                      </small>
-                    )}
-                </FormGroup>
+                </Row>
+              )}
+            </div>
+          )}
 
+          {/* ================= ETAPA 3: AGENDAMENTO (FORMULÁRIO) ================= */}
+          {step === 3 && (
+            <div className="d-flex justify-content-center">
+              <div className={`col-md-8 col-lg-6 ${styles.containerForm}`}>
                 <Button
-                  className={styles.btnSubmit}
-                  onClick={handleBook}
-                  // Botão só ativa se tiver horário e serviço selecionado
-                  disabled={
-                    !selectedProf ||
-                    !selectedService ||
-                    availableSlots.length === 0
-                  }
+                  color="link"
+                  onClick={() => {
+                    setStep(2);
+                    setProfessionals([]);
+                    setAvailability([]);
+                  }}
+                  className="mb-3 ps-0 text-decoration-none text-muted"
                 >
-                  Confirmar Agendamento
+                  &larr; Trocar de Unidade
                 </Button>
 
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    router.back();
-                  }}
-                  className={styles.btnBack}
-                >
-                  Voltar
-                </a>
-              </Form>
-            )}
-          </div>
+                {loading ? (
+                  <div className="text-center py-5">
+                    <Spinner color="secondary" />
+                  </div>
+                ) : (
+                  <Form>
+                    {/* 1. SELECIONA PROFISSIONAL */}
+                    <FormGroup>
+                      <Label className={styles.label}>Profissional</Label>
+                      <Input
+                        type="select"
+                        className={styles.select}
+                        value={selectedProf}
+                        onChange={(e) => setSelectedProf(e.target.value)}
+                      >
+                        <option value="">Quem vai te atender?</option>
+                        {professionals.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.firstName} {p.lastName}
+                          </option>
+                        ))}
+                      </Input>
+                    </FormGroup>
+
+                    {/* 2. CATEGORIA */}
+                    <FormGroup>
+                      <Label className={styles.label}>Categoria</Label>
+                      <Input
+                        type="select"
+                        className={styles.select}
+                        value={selectedCat}
+                        onChange={(e) => setSelectedCat(e.target.value)}
+                        disabled={!selectedProf}
+                      >
+                        <option value="">
+                          {selectedProf
+                            ? "O que deseja fazer?"
+                            : "Selecione um profissional primeiro"}
+                        </option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </Input>
+                    </FormGroup>
+
+                    {/* 3. SERVIÇO */}
+                    <FormGroup>
+                      <Label className={styles.label}>Serviço</Label>
+                      <Input
+                        type="select"
+                        className={styles.select}
+                        value={selectedService}
+                        onChange={(e) => setSelectedService(e.target.value)}
+                        disabled={!selectedCat}
+                      >
+                        <option value="">
+                          {selectedCat
+                            ? "Escolha o serviço"
+                            : "Selecione a categoria"}
+                        </option>
+                        {services.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} - R$ {Number(s.price).toFixed(2)}
+                          </option>
+                        ))}
+                      </Input>
+                    </FormGroup>
+
+                    {/* 4. DATA E HORA */}
+                    <FormGroup>
+                      <Label className={styles.label}>
+                        Data e Hora
+                        {loadingSlots && (
+                          <Spinner
+                            size="sm"
+                            color="secondary"
+                            className="ms-2"
+                          />
+                        )}
+                      </Label>
+                      <div className={styles.datePickerWrapper}>
+                        <DatePicker
+                          selected={startDate}
+                          onChange={(date: Date | null) => {
+                            if (date) setStartDate(date);
+                          }}
+                          showTimeSelect
+                          includeTimes={availableSlots}
+                          timeCaption={
+                            loadingSlots ? "Carregando..." : "Horários"
+                          }
+                          timeIntervals={30}
+                          dateFormat="dd/MM/yyyy - HH:mm"
+                          locale="pt-BR"
+                          className={styles.input}
+                          minDate={new Date()}
+                          filterDate={isDateAvailable}
+                          disabled={!selectedService}
+                          placeholderText={
+                            !selectedService
+                              ? "Selecione o serviço primeiro"
+                              : "Escolha um horário disponível"
+                          }
+                        />
+                      </div>
+
+                      {/* Avisos */}
+                      {selectedProf && availability.length === 0 && (
+                        <small className="text-danger mt-1 d-block">
+                          Este profissional ainda não configurou horários.
+                        </small>
+                      )}
+                      {selectedService &&
+                        !loadingSlots &&
+                        availableSlots.length === 0 && (
+                          <small className="text-warning mt-1 d-block">
+                            Nenhum horário disponível nesta data.
+                          </small>
+                        )}
+                    </FormGroup>
+
+                    <Button
+                      className={styles.btnSubmit}
+                      onClick={handleBook}
+                      disabled={
+                        !selectedProf ||
+                        !selectedService ||
+                        availableSlots.length === 0
+                      }
+                    >
+                      Confirmar Agendamento
+                    </Button>
+                  </Form>
+                )}
+              </div>
+            </div>
+          )}
         </Container>
 
         <Footer />
-
         <ToastComponent
           type={toastType}
           isOpen={toastIsOpen}

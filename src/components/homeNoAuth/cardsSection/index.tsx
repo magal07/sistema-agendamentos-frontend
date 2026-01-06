@@ -15,10 +15,10 @@ const CardsSection = function () {
           </p>
         </div>
         <div className={styles.card2}>
-          <p className={styles.cardTitle}>BARBA E BIGODE</p>
+          <p className={styles.cardTitle}>Espaço Virtuosa</p>
           <p className={styles.cardDescription}>
             Tratamento completo com toalha quente, alinhamento perfeito e
-            hidratação. Cuidamos da sua barba para manter a aparência impecável.
+            hidratação.
           </p>
         </div>
         <div className={styles.card3}>

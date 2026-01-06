@@ -31,7 +31,7 @@ const UserInfo = function () {
   return (
     <>
       <Head>
-        <title>BarberShop - Meus dados</title>
+        <title>Espaço Virtuosa - Meus dados</title>
         <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>

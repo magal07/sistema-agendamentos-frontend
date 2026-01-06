@@ -8,14 +8,12 @@ export interface Professional {
 }
 
 export const professionalService = {
-  getAll: async () => {
-    // Token vai automático agora
-    const response = await api.get("/users/professionals");
-
-    if (response.data && response.data.rows) {
-      return response.data.rows;
-    }
-
-    return response.data;
+  // Agora aceita um companyId opcional
+  getAll: async (companyId?: number) => {
+    // Passa como query param: /users/professionals?companyId=1
+    const res = await api.get("/users/professionals", {
+      params: { companyId },
+    });
+    return res.data;
   },
 };
