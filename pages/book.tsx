@@ -17,11 +17,10 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
-import { setHours, setMinutes } from "date-fns"; // Importante para manipular horas
-
+import { parseISO } from "date-fns";
 import { appointmentService } from "../src/services/appointmentService";
 import { professionalService } from "../src/services/professionalService";
-import availabilityService from "../src/services/availabilityService"; // Importe o serviço
+import availabilityService from "../src/services/availabilityService";
 import ToastComponent from "../src/components/common/toast";
 
 registerLocale("pt-BR", ptBR);
@@ -35,13 +34,17 @@ export default function Book() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
 
-  // Dados
+  // Dados Gerais
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
 
-  // NOVO: Estado para guardar a disponibilidade do profissional selecionado
+  // Disponibilidade Geral (Para bloquear dias da semana inteiros, ex: Domingo)
   const [availability, setAvailability] = useState<any[]>([]);
+
+  // Disponibilidade Específica (Horários calculados pelo backend)
+  const [availableSlots, setAvailableSlots] = useState<Date[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   // Seleções
   const [selectedProf, setSelectedProf] = useState("");
@@ -67,7 +70,7 @@ export default function Book() {
     loadData();
   }, []);
 
-  // 2. Quando mudar Profissional: Filtra Categorias E Busca Disponibilidade
+  // 2. Quando mudar Profissional: Filtra Categorias E Busca Disponibilidade Geral (Dias da semana)
   useEffect(() => {
     if (selectedProf) {
       const prof = professionals.find((p) => p.id.toString() === selectedProf);
@@ -87,21 +90,22 @@ export default function Book() {
         setCategories([]);
       }
 
-      // B) BUSCA DISPONIBILIDADE (NOVO)
+      // B) Busca disponibilidade GERAL (apenas para saber quais dias da semana pintar de cinza)
       availabilityService
         .getByProfessionalId(Number(selectedProf))
-        .then((data) => {
+        .then((data: any) => {
           setAvailability(data);
         });
     } else {
       setCategories([]);
-      setAvailability([]); // Limpa se desmarcar
+      setAvailability([]);
     }
 
     // Reseta campos
     setSelectedCat("");
     setSelectedService("");
     setServices([]);
+    setAvailableSlots([]);
   }, [selectedProf, professionals]);
 
   // 3. Filtra Serviços
@@ -120,47 +124,45 @@ export default function Book() {
     setSelectedService("");
   }, [selectedCat, selectedProf, professionals]);
 
-  // --- LÓGICA DO DATEPICKER ---
+  // 4. NOVO: Busca SLOTS Disponíveis (Horários exatos)
+  // Dispara quando muda a data, o profissional ou o serviço
+  useEffect(() => {
+    const fetchSlots = async () => {
+      if (selectedProf && selectedService && startDate) {
+        setLoadingSlots(true);
+        try {
+          // O backend retorna array de strings: ["2023-10-01 08:00", "2023-10-01 08:30"]
+          const slotsStr = await availabilityService.getAvailableSlots(
+            Number(selectedProf),
+            Number(selectedService),
+            startDate
+          );
 
-  // A. Filtra os dias da semana (Bloqueia Domingo se não trabalhar)
+          // Convertemos para objetos Date que o DatePicker entende
+          const slotsDate = slotsStr.map((s: string) => parseISO(s));
+          setAvailableSlots(slotsDate);
+        } catch (error) {
+          console.error("Erro ao buscar slots", error);
+          setAvailableSlots([]);
+        } finally {
+          setLoadingSlots(false);
+        }
+      }
+    };
+
+    fetchSlots();
+  }, [startDate, selectedProf, selectedService]);
+
+  // --- REGRAS VISUAIS ---
+
+  // A. Bloqueia dias da semana inteiros (ex: Profissional não trabalha Domingo)
   const isDateAvailable = (date: Date) => {
     if (!selectedProf) return false;
-    if (availability.length === 0) return true; // Se não configurou, libera tudo (ou bloqueia tudo, sua escolha)
+    if (availability.length === 0) return true;
 
-    const dayOfWeek = date.getDay(); // 0 = Domingo, 1 = Segunda...
-    // Verifica se existe disponibilidade configurada para esse dia
+    const dayOfWeek = date.getDay();
     return availability.some((a) => a.dayOfWeek === dayOfWeek);
   };
-
-  // B. Calcula Horário Mínimo e Máximo para o dia selecionado
-  const { minTime, maxTime } = useMemo(() => {
-    if (!selectedProf || availability.length === 0) {
-      // Padrão se não tiver config: 08:00 as 18:00
-      return {
-        minTime: setHours(setMinutes(new Date(), 0), 8),
-        maxTime: setHours(setMinutes(new Date(), 0), 18),
-      };
-    }
-
-    const dayOfWeek = startDate.getDay();
-    const config = availability.find((a) => a.dayOfWeek === dayOfWeek);
-
-    if (!config) {
-      // Se o dia não estiver na lista (ex: selecionou no calendário mas mudou config), bloqueia visualmente
-      return {
-        minTime: setHours(setMinutes(new Date(), 0), 0),
-        maxTime: setHours(setMinutes(new Date(), 0), 0),
-      };
-    }
-
-    const [startHour, startMin] = config.startTime.split(":").map(Number);
-    const [endHour, endMin] = config.endTime.split(":").map(Number);
-
-    return {
-      minTime: setHours(setMinutes(new Date(), startMin), startHour),
-      maxTime: setHours(setMinutes(new Date(), endMin), endHour),
-    };
-  }, [startDate, availability, selectedProf]);
 
   // Helper Toast
   const showToast = (type: "success" | "error", msg: string) => {
@@ -282,50 +284,67 @@ export default function Book() {
                   </Input>
                 </FormGroup>
 
-                {/* 4. DATA E HORA (COM REGRAS) */}
+                {/* 4. DATA E HORA (COM SLOTS INTELIGENTES) */}
                 <FormGroup>
-                  <Label className={styles.label}>Data e Hora</Label>
+                  <Label className={styles.label}>
+                    Data e Hora
+                    {loadingSlots && (
+                      <Spinner size="sm" color="secondary" className="ms-2" />
+                    )}
+                  </Label>
                   <div className={styles.datePickerWrapper}>
                     <DatePicker
                       selected={startDate}
-                      onChange={(date: Date | null) =>
-                        date && setStartDate(date)
-                      }
+                      onChange={(date: Date | null) => {
+                        if (date) setStartDate(date);
+                      }}
                       showTimeSelect
-                      timeFormat="HH:mm"
-                      timeIntervals={30} // 30 min fica melhor pra agendamento
+                      // --- AQUI ESTÁ A MUDANÇA PRINCIPAL ---
+                      // Em vez de minTime/maxTime, usamos includeTimes
+                      // Isso faz o DatePicker mostrar APENAS os horários da lista availableSlots
+                      includeTimes={availableSlots}
+                      timeCaption={loadingSlots ? "Carregando..." : "Horários"}
+                      timeIntervals={30} // Intervalo visual, o includeTimes tem prioridade
                       dateFormat="dd/MM/yyyy - HH:mm"
                       locale="pt-BR"
                       className={styles.input}
                       minDate={new Date()} // Não agendar passado
-                      // --- REGRAS DE DISPONIBILIDADE ---
-                      // 1. Desabilita dias que não trabalha (ex: Domingo)
+                      // Mantemos o filtro de dias da semana para visualmente bloquear domingos
                       filterDate={isDateAvailable}
-                      // 2. Define hora mínima (ex: 08:00 do dia selecionado)
-                      minTime={minTime}
-                      // 3. Define hora máxima (ex: 18:00 do dia selecionado)
-                      maxTime={maxTime}
-                      // Desabilita se não selecionar Profissional
-                      disabled={!selectedProf}
+                      // Só libera se tiver serviço (precisamos da duração)
+                      disabled={!selectedService}
                       placeholderText={
-                        !selectedProf
-                          ? "Selecione um profissional"
-                          : "Escolha a data"
+                        !selectedService
+                          ? "Selecione o serviço primeiro"
+                          : "Escolha um horário disponível"
                       }
                     />
                   </div>
-                  {/* Dica para o usuário */}
+
+                  {/* Mensagens de feedback */}
                   {selectedProf && availability.length === 0 && (
                     <small className="text-danger mt-1 d-block">
                       Este profissional ainda não configurou horários.
                     </small>
                   )}
+                  {selectedService &&
+                    !loadingSlots &&
+                    availableSlots.length === 0 && (
+                      <small className="text-warning mt-1 d-block">
+                        Nenhum horário disponível nesta data. Tente outro dia.
+                      </small>
+                    )}
                 </FormGroup>
 
                 <Button
                   className={styles.btnSubmit}
                   onClick={handleBook}
-                  disabled={!selectedProf}
+                  // Botão só ativa se tiver horário e serviço selecionado
+                  disabled={
+                    !selectedProf ||
+                    !selectedService ||
+                    availableSlots.length === 0
+                  }
                 >
                   Confirmar Agendamento
                 </Button>
