@@ -1,29 +1,27 @@
 @import "./colors.module.scss";
 
+// --- LAYOUT PRINCIPAL ---
 .main {
-  background-color: #f8f9fa; // Fundo cinza claro
+  background-color: #f8f9fa; // Fundo cinza claro para destacar os cards brancos
   min-height: 100vh;
-
-  // --- CORREÇÃO DO FOOTER ---
   display: flex;
   flex-direction: column;
-  // padding-bottom: 4rem; <--- REMOVA ISSO (criava um buraco abaixo do footer)
   position: relative;
 }
 
-// --- HERO SECTION ---
+// --- HERO SECTION (Banner Rosa) ---
 .heroSection {
   background: linear-gradient(
     135deg,
     $lightPrimaryColor 0%,
     $darkPrimaryColor 100%
   );
-  padding: 6rem 0 4rem 0; // Aumentei o topo para compensar o Header Fixo
+  padding: 6rem 0 4rem 0; // Topo maior por causa do Header fixo
   border-bottom-left-radius: 30px;
   border-bottom-right-radius: 30px;
   color: white;
   box-shadow: 0 4px 20px rgba($lightPrimaryColor, 0.25);
-  margin-bottom: -2rem;
+  margin-bottom: 0; // Margem zerada pois as Tabs vão subir com margin negativo
 }
 
 .welcomeTitle {
@@ -39,33 +37,7 @@
   margin: 0;
 }
 
-// --- CONTEÚDO PRINCIPAL ---
-.contentContainer {
-  position: relative;
-  z-index: 2;
-  flex: 1; // <--- O PULO DO GATO: Faz o conteúdo empurrar o footer para baixo
-  padding-bottom: 3rem; // Espaço entre os cards e o footer
-}
-
-.sectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  margin-top: 4rem;
-  padding: 0 5px;
-}
-.sectionTitle {
-  color: $darkGray;
-  font-weight: 700;
-  font-size: 1.2rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border-left: 4px solid $lightSecondaryColor;
-  padding-left: 10px;
-}
-
-// --- BOTÃO CTA ---
+// --- BOTÃO CTA (Novo Agendamento) ---
 .btnCta {
   background-color: white !important;
   color: $lightPrimaryColor !important;
@@ -88,6 +60,70 @@
   }
 }
 
+// --- CONTAINER DE CONTEÚDO ---
+.contentContainer {
+  position: relative;
+  z-index: 2;
+  flex: 1; // Empurra o footer para baixo
+  padding-bottom: 3rem;
+}
+
+// --- ABAS (TABS) DE NAVEGAÇÃO ---
+.tabsContainer {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: -1.8rem; // Faz os botões flutuarem entre o banner e o fundo branco
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.tabButton {
+  background: white;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  font-weight: 600;
+  color: $mediumGray;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); // Sombra suave
+  transition: all 0.3s ease;
+  min-width: 140px;
+  cursor: pointer;
+
+  &:hover {
+    color: $darkPrimaryColor;
+    transform: translateY(-2px);
+  }
+
+  &.active {
+    background-color: $darkPrimaryColor;
+    color: white;
+    box-shadow: 0 6px 15px rgba($darkPrimaryColor, 0.3); // Sombra colorida
+    font-weight: 700;
+  }
+}
+
+// --- CABEÇALHO DA SEÇÃO ---
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0 5px;
+}
+
+.sectionTitle {
+  color: $darkGray;
+  font-weight: 700;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-left: 4px solid $lightSecondaryColor;
+  padding-left: 10px;
+}
+
 // --- CARDS DE AGENDAMENTO ---
 .appointmentCard {
   background-color: white;
@@ -107,10 +143,28 @@
     transform: translateY(-5px);
     box-shadow: 0 15px 35px rgba($lightPrimaryColor, 0.15);
   }
+
+  // Estilo específico para cards cancelados (Visual "desativado")
+  &.cardCancelled {
+    opacity: 0.7;
+    filter: grayscale(100%);
+    border-left-color: #ccc;
+    box-shadow: none;
+
+    &:hover {
+      transform: none;
+    }
+
+    .dateBox {
+      background-color: #f0f0f0;
+      color: #999;
+    }
+  }
 }
 
+// Data (Bloco esquerdo)
 .dateBox {
-  background-color: #fff0f5;
+  background-color: #fff0f5; // Fundo rosinha claro
   color: $darkPrimaryColor;
   width: 90px;
   display: flex;
@@ -135,6 +189,7 @@
   margin-top: 5px;
 }
 
+// Informações (Bloco central)
 .infoBox {
   flex: 1;
   padding: 1.5rem;
@@ -157,6 +212,7 @@
   color: $mediumGray;
   font-size: 0.95rem;
   margin-bottom: 0.5rem;
+  text-transform: capitalize;
 
   &::before {
     content: "";
@@ -174,13 +230,14 @@
   font-weight: 600;
 }
 
+// Status e Botões (Bloco direito)
 .statusBox {
   padding: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: flex-end;
-  min-width: 120px;
+  min-width: 130px;
 }
 
 .btnCancel {
@@ -191,6 +248,8 @@
   border-radius: 20px;
   padding: 4px 12px;
   transition: 0.2s;
+  cursor: pointer;
+  margin-top: auto; // Empurra para baixo se tiver espaço
 
   &:hover {
     background-color: #ff6b6b;
@@ -205,6 +264,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
 
   &.confirmed {
     background-color: #e6f9f0;
@@ -220,28 +280,89 @@
   }
 }
 
+// --- EMPTY STATE (Nenhum agendamento) ---
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  margin-top: 1rem;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+  border: 1px dashed rgba($darkPrimaryColor, 0.3); // Borda tracejada elegante
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyIcon {
+  width: 60px;
+  opacity: 0.3;
+  margin-bottom: 20px;
+  filter: grayscale(100%);
+}
+
+// --- RESPONSIVIDADE (MOBILE) ---
 @media (max-width: 576px) {
   .heroSection {
-    padding: 5rem 0 3rem 0; // Ajuste mobile
+    padding: 5rem 0 3.5rem 0;
   }
+
+  .tabsContainer {
+    gap: 0.5rem;
+    margin-top: -1.2rem;
+    padding: 0 10px;
+  }
+
+  .tabButton {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    min-width: auto;
+    flex: 1; // Botões ocupam largura igual
+  }
+
   .appointmentCard {
-    flex-direction: column;
+    flex-direction: column; // Vira coluna no celular
     border-left: none;
     border-top: 6px solid $lightPrimaryColor;
+
+    &.cardCancelled {
+      border-top-color: #ccc;
+    }
   }
+
   .dateBox {
     width: 100%;
-    flex-direction: row;
+    flex-direction: row; // Data vira linha no topo do card
     height: auto;
     gap: 10px;
     padding: 0.8rem;
     border-right: none;
     border-bottom: 1px solid #f0f0f0;
+
+    .day {
+      font-size: 1.5rem;
+    }
+    .month {
+      margin-top: 2px;
+    }
   }
+
+  .infoBox {
+    padding: 1rem;
+    text-align: center; // Centraliza info no mobile
+
+    .timeInfo {
+      justify-content: center; // Centraliza a hora
+    }
+  }
+
   .statusBox {
     width: 100%;
-    flex-direction: row;
+    flex-direction: row; // Status e botão lado a lado no rodapé do card
     align-items: center;
     justify-content: space-between;
+    padding: 1rem;
+    border-top: 1px solid #f9f9f9;
   }
 }

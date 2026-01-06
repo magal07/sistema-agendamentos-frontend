@@ -1,20 +1,37 @@
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Container, Button, Spinner, Row, Col } from "reactstrap";
 import { useRouter } from "next/router";
 import HeaderAuth from "../src/components/common/headerAuth";
 import Footer from "../src/components/common/footer";
 import { appointmentService } from "../src/services/appointmentService";
 import profileService from "../src/services/profileService";
-import { format } from "date-fns";
+import { format, isAfter } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import styles from "../styles/homeAuth.module.scss";
+
+// 1. DEFININDO A INTERFACE (Tipo dos dados)
+interface Appointment {
+  id: number;
+  appointmentDate: string | Date;
+  status: "confirmed" | "pending" | "cancelled";
+  Service?: {
+    name: string;
+  };
+  professional?: {
+    firstName: string;
+  };
+}
 
 export default function HomeAuth() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [appointments, setAppointments] = useState<any[]>([]);
+  // 2. Tipando o useState
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [userName, setUserName] = useState("Cliente");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "history">(
+    "upcoming"
+  );
 
   const fetchInitialData = async () => {
     try {
@@ -36,6 +53,7 @@ export default function HomeAuth() {
     fetchInitialData();
   }, []);
 
+  // 3. Tipando o parâmetro ID
   const handleCancel = async (id: number) => {
     if (!confirm("Tem certeza que deseja cancelar?")) return;
     try {
@@ -46,6 +64,43 @@ export default function HomeAuth() {
     }
   };
 
+  // --- LÓGICA DE FILTRAGEM ---
+  const { upcomingList, historyList } = useMemo(() => {
+    const now = new Date();
+
+    // 4. Tipando explicitamente os arrays vazios
+    const upcoming: Appointment[] = [];
+    const history: Appointment[] = [];
+
+    appointments.forEach((appt) => {
+      const apptDate = new Date(appt.appointmentDate);
+
+      // Lógica: Se é futuro E não está cancelado = Próximos
+      if (isAfter(apptDate, now) && appt.status !== "cancelled") {
+        upcoming.push(appt);
+      } else {
+        history.push(appt);
+      }
+    });
+
+    // 5. Corrigindo a subtração de datas (usando .getTime() para virar number)
+    upcoming.sort(
+      (a, b) =>
+        new Date(a.appointmentDate).getTime() -
+        new Date(b.appointmentDate).getTime()
+    );
+
+    history.sort(
+      (a, b) =>
+        new Date(b.appointmentDate).getTime() -
+        new Date(a.appointmentDate).getTime()
+    );
+
+    return { upcomingList: upcoming, historyList: history };
+  }, [appointments]);
+
+  const displayList = activeTab === "upcoming" ? upcomingList : historyList;
+
   return (
     <>
       <Head>
@@ -55,40 +110,66 @@ export default function HomeAuth() {
       <main className={styles.main}>
         <HeaderAuth />
 
-        {/* --- HERO SECTION (BANNER ROSA) --- */}
+        {/* --- HERO SECTION --- */}
         <div className={styles.heroSection}>
           <Container className="d-flex justify-content-between align-items-center">
             <div>
               <p className={styles.welcomeTitle}>Olá, seja bem-vinda</p>
               <h1 className={styles.userName}>{userName}</h1>
             </div>
-
-            {/* Botão flutuante no Desktop (Hero) - Voltou a ser apenas um */}
             <Button
               className={styles.btnCta}
               onClick={() => router.push("/book")}
             >
-              <span style={{ fontSize: "1.2rem", lineHeight: 0 }}>+</span>{" "}
-              Agendar Horário
+              <span style={{ fontSize: "1.2rem", lineHeight: 0 }}>+</span> Novo
+              Agendamento
             </Button>
           </Container>
         </div>
 
         {/* --- CONTEÚDO --- */}
         <Container className={styles.contentContainer}>
+          {/* NAV TABS CUSTOMIZADA */}
+          <div className={styles.tabsContainer}>
+            <button
+              className={`${styles.tabButton} ${
+                activeTab === "upcoming" ? styles.active : ""
+              }`}
+              onClick={() => setActiveTab("upcoming")}
+            >
+              Próximos Agendamentos
+            </button>
+            <button
+              className={`${styles.tabButton} ${
+                activeTab === "history" ? styles.active : ""
+              }`}
+              onClick={() => setActiveTab("history")}
+            >
+              Histórico de Agendamentos
+            </button>
+          </div>
+
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionTitle}>Seus Horários</span>
+            <span className={styles.sectionTitle}>
+              {activeTab === "upcoming"
+                ? "Seus próximos horários"
+                : "Histórico de atendimentos"}
+            </span>
           </div>
 
           {loading ? (
             <div className="text-center py-5">
               <Spinner color="danger" />
             </div>
-          ) : appointments.length > 0 ? (
+          ) : displayList.length > 0 ? (
             <Row>
-              {appointments.map((appt) => (
+              {displayList.map((appt) => (
                 <Col md={12} key={appt.id}>
-                  <div className={styles.appointmentCard}>
+                  <div
+                    className={`${styles.appointmentCard} ${
+                      appt.status === "cancelled" ? styles.cardCancelled : ""
+                    }`}
+                  >
                     {/* Data */}
                     <div className={styles.dateBox}>
                       <span className={styles.day}>
@@ -118,6 +199,9 @@ export default function HomeAuth() {
                     <div className={styles.statusBox}>
                       <span
                         className={`${styles.statusBadge} ${
+                          // TypeScript reclama se acessar styles com chave genérica string
+                          // Solução segura: styles[appt.status as keyof typeof styles]
+                          // Ou manter assim se o SCSS estiver tipado como any
                           styles[appt.status] || ""
                         }`}
                       >
@@ -128,45 +212,43 @@ export default function HomeAuth() {
                           : "Pendente"}
                       </span>
 
-                      {appt.status !== "cancelled" && (
-                        <button
-                          className={styles.btnCancel}
-                          onClick={() => handleCancel(appt.id)}
-                        >
-                          Cancelar
-                        </button>
-                      )}
+                      {activeTab === "upcoming" &&
+                        appt.status !== "cancelled" && (
+                          <button
+                            className={styles.btnCancel}
+                            onClick={() => handleCancel(appt.id)}
+                          >
+                            Cancelar
+                          </button>
+                        )}
                     </div>
                   </div>
                 </Col>
               ))}
             </Row>
           ) : (
-            <div
-              className="text-center py-5 mt-4"
-              style={{
-                backgroundColor: "white",
-                borderRadius: "20px",
-                padding: "3rem",
-                boxShadow: "0 5px 20px rgba(0,0,0,0.05)",
-              }}
-            >
-              <img
-                src="/logo.png"
-                alt="Empty"
-                style={{ width: "60px", opacity: 0.3, marginBottom: "20px" }}
-              />
-              <h4 className="text-muted mb-3">Nenhum agendamento futuro</h4>
+            // EMPTY STATE
+            <div className={styles.emptyState}>
+              <img src="/logo.png" alt="Empty" className={styles.emptyIcon} />
+              <h4 className="text-muted mb-2">
+                {activeTab === "upcoming"
+                  ? "Nenhum horário marcado"
+                  : "Nenhum histórico encontrado"}
+              </h4>
               <p className="text-muted mb-4">
-                Seu visual merece um upgrade. Vamos agendar algo?
+                {activeTab === "upcoming"
+                  ? "Que tal cuidar de você hoje? Agende um horário."
+                  : "Seus atendimentos anteriores aparecerão aqui."}
               </p>
-              <Button
-                color="secondary"
-                outline
-                onClick={() => router.push("/book")}
-              >
-                Ver disponibilidade
-              </Button>
+              {activeTab === "upcoming" && (
+                <Button
+                  color="secondary"
+                  outline
+                  onClick={() => router.push("/book")}
+                >
+                  Ver disponibilidade
+                </Button>
+              )}
             </div>
           )}
         </Container>
