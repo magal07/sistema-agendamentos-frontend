@@ -16,6 +16,9 @@ const HeaderAuth = function () {
   const [searchName, setSearchName] = useState("");
   const [userRole, setUserRole] = useState("");
 
+  // 1. NOVO ESTADO PARA A FOTO
+  const [avatarUrl, setAvatarUrl] = useState("");
+
   const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     router.push(`search?name=${searchName}`);
@@ -29,12 +32,16 @@ const HeaderAuth = function () {
 
   useEffect(() => {
     profileService.fetchCurrent().then((user) => {
-      // 1. TRATAMENTO DE SEGURANÇA
       const role = user.role ? user.role.toLowerCase() : "";
       const firstNameInitial = user.firstName.slice(0, 1);
       const lastNameInitial = user.lastName.slice(0, 1);
       setInitials(firstNameInitial + lastNameInitial);
       setUserRole(role);
+
+      // 2. PEGAR A FOTO DO BACKEND (SE EXISTIR)
+      if (user.avatarUrl) {
+        setAvatarUrl(`${process.env.NEXT_PUBLIC_BASE_URL}/${user.avatarUrl}`);
+      }
     });
   }, []);
 
@@ -59,7 +66,7 @@ const HeaderAuth = function () {
           {/* LINK MINHA AGENDA */}
           {(userRole === "professional" ||
             userRole === "admin" ||
-            "client") && (
+            userRole === "client") && ( // Obs: Corrigi a lógica aqui que tinha uma string "client" solta
             <Link href="/agenda" style={{ textDecoration: "none" }}>
               <div className={styles.agendaLink}>
                 <span>MINHA AGENDA</span>
@@ -67,30 +74,23 @@ const HeaderAuth = function () {
             </Link>
           )}
 
-          {/* <Form onSubmit={handleSearch}>
-            <Input
-              name="search"
-              type="search"
-              placeholder="Pesquisar"
-              className={styles.input}
-              value={searchName}
-              onChange={(event) => {
-                setSearchName(event.currentTarget.value.toLowerCase());
-              }}
-            />
-          </Form> */}
-          {/* <img
-            src="/homeAuth/iconSearch.svg"
-            alt="lupaHeader"
-            className={styles.searchImg}
-            onClick={handleSearchClick}
-          /> */}
-
           <InstallButton />
 
-          <p className={styles.userProfile} onClick={handleOpenModal}>
-            {initials}
-          </p>
+          {/* 3. LÓGICA VISUAL: FOTO OU INICIAIS */}
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="profile"
+              className={styles.userProfile}
+              onClick={handleOpenModal}
+              // Importante: object-fit cover para a foto não ficar achatada
+              style={{ objectFit: "cover" }}
+            />
+          ) : (
+            <p className={styles.userProfile} onClick={handleOpenModal}>
+              {initials}
+            </p>
+          )}
         </div>
         <Modal
           isOpen={modalOpen}

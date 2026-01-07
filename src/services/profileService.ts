@@ -30,6 +30,20 @@ const profileService = {
     const res = await api.put("/users/current/password", params);
     return res.status;
   },
+
+  uploadAvatar: async (file: File) => {
+    const formData = new FormData();
+    // 'file' deve ser o mesmo nome que configuramos no backend (upload.single('file'))
+    formData.append("file", file);
+
+    const res = await api.patch("/users/current/avatar", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return res.data; // Retorna o usuário atualizado com a nova URL
+  },
 };
 
 export default profileService;
