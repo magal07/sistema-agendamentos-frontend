@@ -1,368 +1,498 @@
-@import "./colors.module.scss";
+/* --- PALETA ESPAÇO VIRTUOSA --- */
 
-// --- LAYOUT PRINCIPAL ---
+/* Cores Principais */
+$lightPrimaryColor: #d48498; // Pink Rose (Destaque)
+$darkPrimaryColor: #b06075; // Pink Escuro (Hover/Gradientes)
+
+/* Cores Secundárias */
+$lightSecondaryColor: #c5a085; // Nude Elegante (Detalhes)
+
+/* Neutros */
+$backgroundSite: #ffffff; // Fundo Geral (Branco)
+$backgroundCard: #fafafa; // Fundo Cards (Off-white/Gelo)
+$borderGray: #eaeaea; // Bordas
+$textMedium: #666666; // Texto Secundário
+$textDark: #333333; // Texto Principal
+
+/* --- VARIÁVEIS DO LAYOUT (Mapeamento) --- */
+$primary: $lightPrimaryColor;
+$primary-dark: $darkPrimaryColor;
+$accent: $lightSecondaryColor;
+$bg-main: $backgroundSite;
+$bg-card: $backgroundCard;
+$text-main: $textDark;
+$text-sub: $textMedium;
+
+$card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+$radius: 16px;
+
+/* --- ESTRUTURA PRINCIPAL --- */
 .main {
-  background-color: #f8f9fa; // Fundo cinza claro para destacar os cards brancos
+  background-color: $bg-main;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+  padding-bottom: 60px;
+  color: $text-main;
 }
 
-// --- HERO SECTION (Banner Rosa) ---
+// --- HERO SECTION ---
 .heroSection {
+  // Gradiente sutil usando a cor primária misturada com branco
   background: linear-gradient(
-    135deg,
-    $lightPrimaryColor 0%,
-    $darkPrimaryColor 100%
+    180deg,
+    mix($primary, #fff, 15%) 0%,
+    $bg-main 100%
   );
-  padding: 6rem 0 4rem 0; // Topo maior por causa do Header fixo
+  padding: 40px 0 50px 0; // Aumentei um pouco o padding inferior para os botões flutuantes
   border-bottom-left-radius: 30px;
   border-bottom-right-radius: 30px;
-  color: white;
-  box-shadow: 0 4px 20px rgba($lightPrimaryColor, 0.25);
-  margin-bottom: 0; // Margem zerada pois as Tabs vão subir com margin negativo
+  // Sombra leve para separar do fundo branco
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
 }
 
-.welcomeTitle {
-  font-size: 1.5rem;
-  font-weight: 300;
-  margin: 0;
-  opacity: 0.9;
-}
-
-.userName {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-// --- BOTÃO CTA (Novo Agendamento) ---
-.btnCta {
-  background-color: white !important;
-  color: $lightPrimaryColor !important;
-  border: none !important;
-  border-radius: 50px;
-  padding: 0.6rem 1.5rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+.heroHeader {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  margin-bottom: 24px;
 
-  &:hover {
-    background-color: #fff0f5 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  .greeting {
+    font-size: 0.85rem;
+    color: $text-sub;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .pageTitle {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: $text-main;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+    background: $primary;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba($primary, 0.3);
+    border: 2px solid #fff; // Borda branca para destacar
+
+    &:hover {
+      transform: scale(1.05);
+      background: $primary-dark;
+    }
   }
 }
 
-// --- CONTAINER DE CONTEÚDO ---
-.contentContainer {
+// --- CARD DESTAQUE (Glassmorphism + Gradiente Marca) ---
+.highlightCard {
+  // Gradiente do Pink Rose para o Pink Escuro
+  background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
+  border-radius: $radius + 4px;
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba($primary, 0.25);
+  margin-bottom: 10px;
   position: relative;
-  z-index: 2;
-  flex: 1; // Empurra o footer para baixo
-  padding-bottom: 3rem;
+  transition: transform 0.3s;
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+
+  // Efeito de vidro sutil sobre o gradiente
+  .glassEffect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    padding: 24px;
+    height: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.2); // Borda sutil
+    border-radius: $radius + 4px;
+  }
+
+  .highlightHeader {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+
+    .badgeNext {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      font-weight: 600;
+    }
+
+    .badgeConfirmed {
+      background: rgba(255, 255, 255, 0.25);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .highlightContent {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+
+    .bigDate {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 12px 18px;
+      border-radius: 16px;
+      min-width: 75px;
+
+      span {
+        font-size: 1.8rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+      small {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        margin-top: 4px;
+        font-weight: 600;
+      }
+    }
+
+    .details {
+      h3 {
+        margin: 0 0 6px 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+      p {
+        margin: 0;
+        font-size: 0.9rem;
+        opacity: 0.95;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+
+      // Destaca o nome do profissional
+      strong {
+        color: mix($accent, #fff, 20%); // Um tom levemente nude/branco
+      }
+    }
+  }
 }
 
-// --- ABAS (TABS) DE NAVEGAÇÃO ---
-.tabsContainer {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: -1.8rem; // Faz os botões flutuarem entre o banner e o fundo branco
-  margin-bottom: 2.5rem;
+// --- ACTIONS BAR (Scroll Horizontal) ---
+.actionsContainer {
+  margin-top: -25px; // Sobe para sobrepor o Hero
+  margin-bottom: 30px;
   position: relative;
   z-index: 10;
 }
 
-.tabButton {
-  background: white;
-  border: none;
-  padding: 0.8rem 2rem;
-  border-radius: 50px;
-  font-weight: 600;
-  color: $mediumGray;
-  font-size: 0.95rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); // Sombra suave
-  transition: all 0.3s ease;
-  min-width: 140px;
-  cursor: pointer;
-
-  &:hover {
-    color: $darkPrimaryColor;
-    transform: translateY(-2px);
-  }
-
-  &.active {
-    background-color: $darkPrimaryColor;
-    color: white;
-    box-shadow: 0 6px 15px rgba($darkPrimaryColor, 0.3); // Sombra colorida
-    font-weight: 700;
-  }
-}
-
-// --- CABEÇALHO DA SEÇÃO ---
-.sectionHeader {
+.scrollableRow {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding: 0 5px;
-}
+  gap: 12px;
+  overflow-x: auto;
+  padding: 10px 5px;
+  scrollbar-width: none;
 
-.sectionTitle {
-  color: $darkGray;
-  font-weight: 700;
-  font-size: 1.2rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border-left: 4px solid $lightSecondaryColor;
-  padding-left: 10px;
-}
-
-// --- CARDS DE AGENDAMENTO ---
-.appointmentCard {
-  background-color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 0;
-  display: flex;
-  align-items: stretch;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-  cursor: default;
-  border-left: 6px solid $lightPrimaryColor;
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba($lightPrimaryColor, 0.15);
+  &::-webkit-scrollbar {
+    display: none;
   }
 
-  // Estilo específico para cards cancelados (Visual "desativado")
-  &.cardCancelled {
-    opacity: 0.7;
-    filter: grayscale(100%);
-    border-left-color: #ccc;
-    box-shadow: none;
+  .actionBtn {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 75px;
+    cursor: pointer;
+    transition: transform 0.2s;
+
+    .iconCircle {
+      width: 58px;
+      height: 58px;
+      background: $bg-card; // Off-white
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: $text-main;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06); // Sombra suave
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+      border: 1px solid #fff; // Borda sutil interna
+
+      &.whatsapp {
+        color: #25d366;
+      }
+    }
+
+    span {
+      font-size: 0.75rem;
+      color: $text-sub;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    &:hover .iconCircle {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba($primary, 0.15); // Glow rosa no hover
+      color: $primary;
+      background: #fff;
+    }
+
+    &:active .iconCircle {
+      transform: scale(0.95);
+    }
+  }
+}
+
+// --- TABS MODERNAS ---
+.tabsModern {
+  display: flex;
+  gap: 25px;
+  margin-bottom: 25px;
+  border-bottom: 2px solid $borderGray; // Linha cinza claro
+  padding-bottom: 0px;
+
+  button {
+    background: none;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $text-sub;
+    padding-bottom: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: color 0.3s;
 
     &:hover {
-      transform: none;
+      color: $primary;
     }
 
-    .dateBox {
-      background-color: #f0f0f0;
-      color: #999;
+    &.active {
+      color: $text-main;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: -2px; // Sobrepõe a linha cinza
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: $primary;
+        border-radius: 3px 3px 0 0;
+        box-shadow: 0 -2px 6px rgba($primary, 0.4); // Glow na aba ativa
+      }
     }
   }
 }
 
-// Data (Bloco esquerdo)
-.dateBox {
-  background-color: #fff0f5; // Fundo rosinha claro
-  color: $darkPrimaryColor;
-  width: 90px;
+// --- LISTA DE CARDS ---
+.listContainer {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
-  border-right: 1px solid #f0f0f0;
+  gap: 16px;
 }
 
-.day {
-  font-size: 2rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.month {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 1px;
-  margin-top: 5px;
-}
-
-// Informações (Bloco central)
-.infoBox {
-  flex: 1;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  h4 {
-    color: $darkGray;
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-  }
-}
-
-.timeInfo {
+.appointmentCard {
+  background: $bg-card; // Off-white para destacar do fundo branco
+  border-radius: $radius;
+  padding: 18px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: $mediumGray;
-  font-size: 0.95rem;
-  margin-bottom: 0.5rem;
-  text-transform: capitalize;
-
-  &::before {
-    content: "";
-    display: block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: $lightSecondaryColor;
-  }
-}
-
-.profInfo {
-  font-size: 0.9rem;
-  color: $lightSecondaryColor;
-  font-weight: 600;
-}
-
-// Status e Botões (Bloco direito)
-.statusBox {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-end;
-  min-width: 130px;
-}
-
-.btnCancel {
-  font-size: 0.8rem;
-  color: #ff6b6b;
-  background: transparent;
-  border: 1px solid #ff6b6b;
-  border-radius: 20px;
-  padding: 4px 12px;
-  transition: 0.2s;
-  cursor: pointer;
-  margin-top: auto; // Empurra para baixo se tiver espaço
+  gap: 18px;
+  box-shadow: $card-shadow;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
 
   &:hover {
-    background-color: #ff6b6b;
-    color: white;
+    border-color: rgba($primary, 0.3);
+    transform: translateY(-2px);
+    background: #fff; // Fica branco puro no hover
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
   }
-}
 
-.statusBadge {
-  font-size: 0.75rem;
-  padding: 6px 12px;
-  border-radius: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.5rem;
-
-  &.confirmed {
-    background-color: #e6f9f0;
-    color: #00b074;
-  }
-  &.pending {
-    background-color: #fff8e1;
-    color: #ffc107;
-  }
+  // Variações de Status
   &.cancelled {
-    background-color: #fde8e8;
-    color: #f05050;
-  }
-}
-
-// --- EMPTY STATE (Nenhum agendamento) ---
-.emptyState {
-  text-align: center;
-  padding: 4rem 2rem;
-  margin-top: 1rem;
-  background-color: white;
-  border-radius: 20px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
-  border: 1px dashed rgba($darkPrimaryColor, 0.3); // Borda tracejada elegante
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.emptyIcon {
-  width: 60px;
-  opacity: 0.3;
-  margin-bottom: 20px;
-  filter: grayscale(100%);
-}
-
-// --- RESPONSIVIDADE (MOBILE) ---
-@media (max-width: 576px) {
-  .heroSection {
-    padding: 5rem 0 3.5rem 0;
-  }
-
-  .tabsContainer {
-    gap: 0.5rem;
-    margin-top: -1.2rem;
-    padding: 0 10px;
-  }
-
-  .tabButton {
-    padding: 0.6rem 1rem;
-    font-size: 0.85rem;
-    min-width: auto;
-    flex: 1; // Botões ocupam largura igual
-  }
-
-  .appointmentCard {
-    flex-direction: column; // Vira coluna no celular
-    border-left: none;
-    border-top: 6px solid $lightPrimaryColor;
-
-    &.cardCancelled {
-      border-top-color: #ccc;
-    }
+    opacity: 0.6;
+    filter: grayscale(100%);
+    background: #f5f5f5;
   }
 
   .dateBox {
-    width: 100%;
-    flex-direction: row; // Data vira linha no topo do card
-    height: auto;
-    gap: 10px;
-    padding: 0.8rem;
-    border-right: none;
-    border-bottom: 1px solid #f0f0f0;
+    background: rgba($primary, 0.08); // Fundo rosa bem clarinho
+    color: $primary;
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 65px;
 
     .day {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
+      font-weight: 800;
+      line-height: 1;
     }
     .month {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
       margin-top: 2px;
     }
   }
 
   .infoBox {
-    padding: 1rem;
-    text-align: center; // Centraliza info no mobile
+    flex: 1;
+    h4 {
+      font-size: 1.05rem;
+      margin: 0 0 6px 0;
+      color: $text-main;
+      font-weight: 700;
+    }
+    .timeRow {
+      font-size: 0.85rem;
+      color: $text-sub;
+      margin: 0 0 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
 
-    .timeInfo {
-      justify-content: center; // Centraliza a hora
+    .statusPill {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+
+      &.confirmed {
+        background: rgba(39, 174, 96, 0.1); // Verde translúcido
+        color: #27ae60;
+      }
+      &.pending {
+        background: rgba(243, 156, 18, 0.1); // Laranja translúcido
+        color: #d35400;
+      }
+      &.cancelled {
+        background: rgba(192, 57, 43, 0.1); // Vermelho translúcido
+        color: #c0392b;
+      }
+      &.completed {
+        background: rgba($text-sub, 0.1);
+        color: $text-sub;
+      }
     }
   }
 
-  .statusBox {
-    width: 100%;
-    flex-direction: row; // Status e botão lado a lado no rodapé do card
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem;
-    border-top: 1px solid #f9f9f9;
+  .actionBox {
+    .btnIconCancel {
+      background: transparent;
+      border: 1px solid $borderGray;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #ccc;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #fff5f5;
+        border-color: #ffcccc;
+        color: #e74c3c;
+        transform: rotate(90deg);
+      }
+    }
+  }
+}
+
+// --- SKELETON ANIMATION ---
+.skeletonPulse {
+  animation: pulse 1.5s infinite ease-in-out;
+  border: 1px solid $borderGray;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+// --- BOTÕES GERAIS E ESTADOS VAZIOS ---
+.btnPrimary {
+  background: $primary;
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 30px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba($primary, 0.3);
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  &:hover {
+    background: $primary-dark;
+    box-shadow: 0 6px 20px rgba($primary, 0.4);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.emptyHeroCard,
+.emptyList,
+.adminDashboard {
+  text-align: center;
+  padding: 40px 20px;
+  background: $bg-card; // Off-white
+  border-radius: $radius;
+  box-shadow: $card-shadow;
+  border: 1px solid #fff; // Borda sutil para acabamento premium
+
+  h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: $text-main;
+  }
+  p {
+    color: $text-sub;
+    margin-bottom: 25px;
+    font-size: 0.95rem;
   }
 }

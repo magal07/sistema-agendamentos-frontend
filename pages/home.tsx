@@ -1,55 +1,60 @@
 import Head from "next/head";
 import { useEffect, useState, useMemo } from "react";
-import { Container, Button, Spinner, Row, Col } from "reactstrap";
+import { Container } from "reactstrap"; // Mantendo Container do reactstrap se for o que usas
 import { useRouter } from "next/router";
 import HeaderAuth from "../src/components/common/headerAuth";
 import Footer from "../src/components/common/footer";
 import { appointmentService } from "../src/services/appointmentService";
 import profileService from "../src/services/profileService";
-import { format, isAfter } from "date-fns";
+import { format, isAfter, getHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import styles from "../styles/homeAuth.module.scss";
 
-// 1. DEFININDO A INTERFACE (Tipo dos dados)
+// --- Componentes de Ícones (Simples) ---
+const Icons = {
+  Calendar: () => <span>📅</span>,
+  User: () => <span>👤</span>,
+  History: () => <span>📜</span>,
+  Support: () => <span>💬</span>,
+  Clock: () => <span>⏰</span>,
+};
+
+// --- Definição da Interface (Tipagem) ---
 interface Appointment {
   id: number;
   appointmentDate: string | Date;
-  status: "confirmed" | "pending" | "cancelled";
-  Service?: {
-    name: string;
-  };
-  professional?: {
-    firstName: string;
-  };
+  status: "confirmed" | "pending" | "cancelled" | "completed";
+  Service?: { name: string };
+  professional?: { firstName: string };
 }
 
 export default function HomeAuth() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-
-  // 2. Estados
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [userName, setUserName] = useState("Cliente");
-  // -- ALTERAÇÃO: Novo estado para guardar a função do usuário --
   const [userRole, setUserRole] = useState<string>("");
-
   const [activeTab, setActiveTab] = useState<"upcoming" | "history">(
     "upcoming"
   );
 
+  // --- SAUDAÇÃO DINÂMICA ---
+  const greeting = useMemo(() => {
+    const hour = getHours(new Date());
+    if (hour >= 5 && hour < 12) return "Bom dia";
+    if (hour >= 12 && hour < 18) return "Boa tarde";
+    return "Boa noite";
+  }, []);
+
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      // Buscamos os dados. Nota: Se não for cliente, getMyList pode vir vazio ou nem ser necessário,
-      // mas mantemos aqui para simplicidade, o filtro visual será feito no JSX.
       const [listData, userData] = await Promise.all([
         appointmentService.getMyList(),
         profileService.fetchCurrent(),
       ]);
-
       setAppointments(listData);
       setUserName(userData.firstName);
-      // -- ALTERAÇÃO: Salvando a role do usuário --
       setUserRole(userData.role);
     } catch (err) {
       console.error("Erro ao carregar dados", err);
@@ -63,7 +68,7 @@ export default function HomeAuth() {
   }, []);
 
   const handleCancel = async (id: number) => {
-    if (!confirm("Tem certeza que deseja cancelar?")) return;
+    if (!confirm("Deseja realmente cancelar este agendamento?")) return;
     try {
       await appointmentService.cancel(id);
       fetchInitialData();
@@ -72,15 +77,23 @@ export default function HomeAuth() {
     }
   };
 
-  // --- LÓGICA DE FILTRAGEM ---
-  const { upcomingList, historyList } = useMemo(() => {
+  // --- LÓGICA DE FILTRAGEM (Correção do TypeScript aplicada aqui) ---
+  const { upcomingList, historyList, nextAppointment } = useMemo<{
+    upcomingList: Appointment[];
+    historyList: Appointment[];
+    nextAppointment: Appointment | null;
+  }>(() => {
     const now = new Date();
     const upcoming: Appointment[] = [];
     const history: Appointment[] = [];
 
     appointments.forEach((appt) => {
       const apptDate = new Date(appt.appointmentDate);
-      if (isAfter(apptDate, now) && appt.status !== "cancelled") {
+      if (
+        isAfter(apptDate, now) &&
+        appt.status !== "cancelled" &&
+        appt.status !== "completed"
+      ) {
         upcoming.push(appt);
       } else {
         history.push(appt);
@@ -92,205 +105,320 @@ export default function HomeAuth() {
         new Date(a.appointmentDate).getTime() -
         new Date(b.appointmentDate).getTime()
     );
-
     history.sort(
       (a, b) =>
         new Date(b.appointmentDate).getTime() -
         new Date(a.appointmentDate).getTime()
     );
 
-    return { upcomingList: upcoming, historyList: history };
+    const nextAppt = upcoming.length > 0 ? upcoming[0] : null;
+    const listWithoutNext = upcoming.length > 0 ? upcoming.slice(1) : [];
+
+    return {
+      upcomingList: listWithoutNext,
+      historyList: history,
+      nextAppointment: nextAppt,
+    };
   }, [appointments]);
 
+  // A lista de exibição agora herda a tipagem correta
   const displayList = activeTab === "upcoming" ? upcomingList : historyList;
+
+  // --- SKELETON LOADING ---
+  const SkeletonCard = () => (
+    <div className={`${styles.appointmentCard} ${styles.skeletonPulse}`}>
+      <div
+        className={styles.dateBox}
+        style={{ background: "#e0e0e0", color: "transparent" }}
+      >
+        00
+      </div>
+      <div className={styles.infoBox}>
+        <div
+          style={{
+            height: 16,
+            width: "60%",
+            background: "#e0e0e0",
+            marginBottom: 8,
+            borderRadius: 4,
+          }}
+        ></div>
+        <div
+          style={{
+            height: 12,
+            width: "40%",
+            background: "#e0e0e0",
+            borderRadius: 4,
+          }}
+        ></div>
+      </div>
+    </div>
+  );
 
   return (
     <>
       <Head>
         <title>Minha Agenda - Espaço Virtuosa</title>
-        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderAuth />
 
-        {/* --- HERO SECTION --- */}
+        {/* HERO SECTION */}
         <div className={styles.heroSection}>
-          <Container className="d-flex justify-content-between align-items-center">
-            <div>
-              <p className={styles.welcomeTitle}>Olá, seja bem-vinda</p>
-              <h1 className={styles.userName}>{userName}</h1>
+          <Container>
+            <div className={styles.heroHeader}>
+              <div>
+                <p className={styles.greeting}>
+                  {greeting}, {userName}!
+                </p>
+                <h1 className={styles.pageTitle}>Seu espaço de beleza</h1>
+              </div>
+              <div
+                className={styles.avatar}
+                onClick={() => router.push("/profile")}
+              >
+                {userName.charAt(0).toUpperCase()}
+              </div>
             </div>
 
-            <div className="d-flex gap-3">
-              {/* -- ALTERAÇÃO: Botão de Relatórios (Apenas Admin/CompanyAdmin) -- */}
-              {(userRole === "admin" || userRole === "company_admin") && (
-                <Button
-                  className={styles.btnCta} // Usando mesmo estilo ou crie um novo btnReport
-                  style={{ backgroundColor: "#fff", color: "#333" }} // Pequeno ajuste inline se quiser diferenciar
-                  onClick={() => router.push("/reports/financial")}
-                >
-                  📊 Relatórios Financeiros
-                </Button>
-              )}
+            {/* CARD DESTAQUE */}
+            {userRole === "client" && !loading && nextAppointment && (
+              <div className={styles.highlightCard}>
+                <div className={styles.glassEffect}>
+                  <div className={styles.highlightHeader}>
+                    <span className={styles.badgeNext}>Próximo Horário</span>
+                    <span className={styles.badgeConfirmed}>Confirmado</span>
+                  </div>
 
-              {/* -- ALTERAÇÃO: Botão de Novo Agendamento (Apenas Clientes) -- */}
-              {userRole === "client" && (
-                <Button
-                  className={styles.btnCta}
+                  <div className={styles.highlightContent}>
+                    <div className={styles.bigDate}>
+                      <span>
+                        {format(
+                          new Date(nextAppointment.appointmentDate),
+                          "dd"
+                        )}
+                      </span>
+                      <small>
+                        {format(
+                          new Date(nextAppointment.appointmentDate),
+                          "MMM",
+                          { locale: ptBR }
+                        )}
+                      </small>
+                    </div>
+                    <div className={styles.details}>
+                      <h3>{nextAppointment.Service?.name}</h3>
+                      <p>
+                        <Icons.Clock />{" "}
+                        {format(
+                          new Date(nextAppointment.appointmentDate),
+                          "HH:mm"
+                        )}{" "}
+                        •{" "}
+                        {format(
+                          new Date(nextAppointment.appointmentDate),
+                          "EEEE",
+                          { locale: ptBR }
+                        )}
+                      </p>
+                      <p>
+                        <Icons.User /> com{" "}
+                        <strong>
+                          {nextAppointment.professional?.firstName}
+                        </strong>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* EMPTY STATE HERO */}
+            {userRole === "client" && !loading && !nextAppointment && (
+              <div className={styles.emptyHeroCard}>
+                <h3>Tudo tranquilo por aqui ✨</h3>
+                <p>Que tal reservar um momento para você?</p>
+                <button
+                  className={styles.btnPrimary}
                   onClick={() => router.push("/book")}
                 >
-                  <span style={{ fontSize: "1.2rem", lineHeight: 0 }}>+</span>{" "}
-                  Novo Agendamento
-                </Button>
-              )}
-            </div>
+                  Agendar Novo Horário
+                </button>
+              </div>
+            )}
           </Container>
         </div>
 
-        {/* --- CONTEÚDO --- */}
-        <Container className={styles.contentContainer}>
-          {/* -- ALTERAÇÃO: Lógica para mostrar listas APENAS se for Cliente -- */}
-          {userRole === "client" ? (
-            <>
-              {/* NAV TABS CUSTOMIZADA */}
-              <div className={styles.tabsContainer}>
+        {/* MENU DE AÇÕES RÁPIDAS */}
+        {userRole === "client" && (
+          <div className={styles.actionsContainer}>
+            <Container>
+              <div className={styles.scrollableRow}>
                 <button
-                  className={`${styles.tabButton} ${
-                    activeTab === "upcoming" ? styles.active : ""
-                  }`}
-                  onClick={() => setActiveTab("upcoming")}
+                  className={styles.actionBtn}
+                  onClick={() => router.push("/book")}
                 >
-                  Próximos Agendamentos
+                  <div className={styles.iconCircle}>+</div>
+                  <span>Agendar</span>
                 </button>
                 <button
-                  className={`${styles.tabButton} ${
-                    activeTab === "history" ? styles.active : ""
-                  }`}
+                  className={styles.actionBtn}
+                  onClick={() => router.push("/profile")}
+                >
+                  <div className={styles.iconCircle}>
+                    <Icons.User />
+                  </div>
+                  <span>Perfil</span>
+                </button>
+                <button
+                  className={styles.actionBtn}
                   onClick={() => setActiveTab("history")}
                 >
-                  Histórico de Agendamentos
+                  <div className={styles.iconCircle}>
+                    <Icons.History />
+                  </div>
+                  <span>Histórico</span>
+                </button>
+                <button
+                  className={styles.actionBtn}
+                  onClick={() =>
+                    window.open("https://wa.me/551100000000", "_blank")
+                  }
+                >
+                  <div className={`${styles.iconCircle} ${styles.whatsapp}`}>
+                    <Icons.Support />
+                  </div>
+                  <span>Ajuda</span>
+                </button>
+              </div>
+            </Container>
+          </div>
+        )}
+
+        <Container className="py-4">
+          {userRole === "client" ? (
+            <>
+              {/* ABAS */}
+              <div className={styles.tabsModern}>
+                <button
+                  className={activeTab === "upcoming" ? styles.active : ""}
+                  onClick={() => setActiveTab("upcoming")}
+                >
+                  Agendados
+                </button>
+                <button
+                  className={activeTab === "history" ? styles.active : ""}
+                  onClick={() => setActiveTab("history")}
+                >
+                  Histórico
                 </button>
               </div>
 
-              <div className={styles.sectionHeader}>
-                <span className={styles.sectionTitle}>
-                  {activeTab === "upcoming"
-                    ? "Seus próximos horários"
-                    : "Histórico de atendimentos"}
-                </span>
-              </div>
-
-              {loading ? (
-                <div className="text-center py-5">
-                  <Spinner color="danger" />
-                </div>
-              ) : displayList.length > 0 ? (
-                <Row>
-                  {displayList.map((appt) => (
-                    <Col md={12} key={appt.id}>
-                      <div
-                        className={`${styles.appointmentCard} ${
-                          appt.status === "cancelled"
-                            ? styles.cardCancelled
-                            : ""
-                        }`}
-                      >
-                        {/* Data */}
-                        <div className={styles.dateBox}>
-                          <span className={styles.day}>
-                            {format(new Date(appt.appointmentDate), "dd")}
-                          </span>
-                          <span className={styles.month}>
-                            {format(new Date(appt.appointmentDate), "MMM", {
-                              locale: ptBR,
-                            })}
-                          </span>
-                        </div>
-
-                        {/* Informações */}
-                        <div className={styles.infoBox}>
-                          <h4>{appt.Service?.name || "Serviço Especial"}</h4>
-                          <div className={styles.timeInfo}>
-                            {format(
-                              new Date(appt.appointmentDate),
-                              "EEEE, HH:mm",
-                              {
-                                locale: ptBR,
-                              }
-                            )}
-                          </div>
-                          <div className={styles.profInfo}>
-                            Profissional: {appt.professional?.firstName}
-                          </div>
-                        </div>
-
-                        {/* Status e Ações */}
-                        <div className={styles.statusBox}>
-                          <span
-                            className={`${styles.statusBadge} ${
-                              styles[appt.status] || ""
-                            }`}
-                          >
-                            {appt.status === "confirmed"
-                              ? "Confirmado"
-                              : appt.status === "cancelled"
-                              ? "Cancelado"
-                              : "Pendente"}
-                          </span>
-
-                          {activeTab === "upcoming" &&
-                            appt.status !== "cancelled" && (
-                              <button
-                                className={styles.btnCancel}
-                                onClick={() => handleCancel(appt.id)}
-                              >
-                                Cancelar
-                              </button>
-                            )}
-                        </div>
+              {/* LISTA DE AGENDAMENTOS */}
+              <div className={styles.listContainer}>
+                {loading ? (
+                  <>
+                    <SkeletonCard />
+                    <SkeletonCard />
+                  </>
+                ) : displayList.length > 0 ? (
+                  displayList.map((appt) => (
+                    <div
+                      key={appt.id}
+                      className={`${styles.appointmentCard} ${
+                        styles[appt.status]
+                      }`}
+                    >
+                      <div className={styles.dateBox}>
+                        <span className={styles.day}>
+                          {format(new Date(appt.appointmentDate), "dd")}
+                        </span>
+                        <span className={styles.month}>
+                          {format(new Date(appt.appointmentDate), "MMM", {
+                            locale: ptBR,
+                          })}
+                        </span>
                       </div>
-                    </Col>
-                  ))}
-                </Row>
-              ) : (
-                // EMPTY STATE
-                <div className={styles.emptyState}>
-                  <img
-                    src="/logo.png"
-                    alt="Empty"
-                    className={styles.emptyIcon}
-                  />
-                  <h4 className="text-muted mb-2">
-                    {activeTab === "upcoming"
-                      ? "Nenhum horário marcado"
-                      : "Nenhum histórico encontrado"}
-                  </h4>
-                  <p className="text-muted mb-4">
-                    {activeTab === "upcoming"
-                      ? "Que tal cuidar de você hoje? Agende um horário."
-                      : "Seus atendimentos anteriores aparecerão aqui."}
-                  </p>
 
-                  {/* Botão do Empty State também só aparece para quem pode agendar */}
-                  <Button
-                    color="secondary"
-                    outline
-                    onClick={() => router.push("/book")}
-                  >
-                    Ver disponibilidade
-                  </Button>
-                </div>
-              )}
+                      <div className={styles.infoBox}>
+                        <h4>{appt.Service?.name || "Serviço"}</h4>
+                        <p className={styles.timeRow}>
+                          {format(new Date(appt.appointmentDate), "HH:mm")} •{" "}
+                          {appt.professional?.firstName}
+                        </p>
+
+                        <span
+                          className={`${styles.statusPill} ${
+                            styles[appt.status]
+                          }`}
+                        >
+                          {appt.status === "confirmed"
+                            ? "Confirmado"
+                            : appt.status === "pending"
+                            ? "Pendente"
+                            : appt.status === "cancelled"
+                            ? "Cancelado"
+                            : "Concluído"}
+                        </span>
+                      </div>
+
+                      {activeTab === "upcoming" &&
+                        appt.status !== "cancelled" && (
+                          <div className={styles.actionBox}>
+                            <button
+                              className={styles.btnIconCancel}
+                              onClick={() => handleCancel(appt.id)}
+                              title="Cancelar"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.emptyList}>
+                    <p className="text-muted">
+                      {activeTab === "upcoming"
+                        ? "Nenhum outro agendamento futuro."
+                        : "Seu histórico está vazio."}
+                    </p>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
-            // -- ALTERAÇÃO: O que mostrar para Admin/Profissional se não ver a lista --
-            <div className="text-center py-5">
-              <h3 className="text-muted">Bem-vindo ao Painel Administrativo</h3>
-              <p className="text-muted">
-                Utilize o menu para navegar ou acessar os relatórios.
+            // Visão Admin/Profissional
+            <div className={styles.adminDashboard}>
+              <h3>Olá, {userName} </h3>
+              <p>
+                Este é o seu painel administrativo para conferir suas métricas
+                detalhadas e gerenciar agendamentos.
               </p>
 
-              {/* Se quiser adicionar atalhos rápidos para Admin aqui futuramente, este é o lugar */}
+              {/* Container Flex para alinhar os botões lado a lado */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "16px",
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  className={styles.btnPrimary}
+                  onClick={() => router.push("/reports/financial")}
+                >
+                  📊 Ir para Relatórios
+                </button>
+
+                <button
+                  className={styles.btnPrimary}
+                  onClick={() => (window.location.href = "/agenda")}
+                >
+                  📅 Ir para Agenda
+                </button>
+              </div>
             </div>
           )}
         </Container>
