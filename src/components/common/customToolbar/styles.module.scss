@@ -1,0 +1,107 @@
+@import "../../../../styles/colors.module.scss";
+
+// --- CUSTOM TOOLBAR STYLES ---
+
+.customToolbar {
+  display: flex;
+  flex-direction: column; // No mobile, empilha (Data em cima, botões embaixo)
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+
+  @media (min-width: 768px) {
+    flex-direction: row; // No Desktop, fica um ao lado do outro
+    justify-content: space-between;
+  }
+}
+
+.toolbarTop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    width: auto;
+  }
+}
+
+.navGroup {
+  display: flex;
+  align-items: center;
+  gap: 15px; // Espaço entre setas e texto
+}
+
+.toolbarLabel {
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-transform: capitalize; // "janeiro 2026" fica "Janeiro 2026"
+  color: $darkPrimaryColor; // Sua cor rosa escuro
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.navBtn {
+  background: none;
+  border: 1px solid #eee;
+  border-radius: 50%; // Botão redondo
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding-bottom: 4px; // Ajuste visual da seta unicode
+
+  &:hover {
+    background-color: $lightPrimaryColor;
+    color: white;
+    border-color: $lightPrimaryColor;
+  }
+}
+
+.toolbarBottom {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+
+  @media (min-width: 768px) {
+    width: auto;
+  }
+}
+
+// Estilos específicos para os botões do Reactstrap dentro da toolbar
+.viewSwitcher {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+
+  button {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 5px 15px;
+
+    // Remove o azul padrão do bootstrap primary e usa suas cores
+    &.viewBtn {
+      border-color: #ddd;
+      color: #666;
+      &:hover {
+        background-color: #f8f8f8;
+        color: #333;
+      }
+    }
+
+    &.activeViewBtn {
+      background-color: $darkPrimaryColor !important;
+      border-color: $darkPrimaryColor !important;
+      color: white !important;
+    }
+  }
+}

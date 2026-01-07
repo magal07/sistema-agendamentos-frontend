@@ -1,6 +1,7 @@
 @import "../../../../styles/colors.module.scss";
 
 // Container Principal
+// IMPORTANTE: Tudo deve estar dentro desta classe para evitar conflitos globais
 .calendarContainer {
   height: 75vh;
   background-color: white;
@@ -9,33 +10,61 @@
   box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
   margin-top: 20px;
 
-  // --- OVERRIDES GLOBAIS ---
+  // --- OVERRIDES GLOBAIS DO CALENDÁRIO ---
   :global {
     .rbc-calendar {
       color: #222222 !important;
       font-family: sans-serif;
     }
 
-    // Links de data e Header
+    // Links de data
     .rbc-button-link,
     .rbc-date-cell a,
     .rbc-date-cell button {
       color: #222222 !important;
       font-weight: bold;
     }
+
+    // CABEÇALHO (Dias da Semana)
     .rbc-header {
       color: $darkPrimaryColor !important;
       font-weight: 800 !important;
       text-transform: uppercase;
       padding: 10px 0;
       border-bottom: 2px solid #eee !important;
+
+      // --- CORREÇÃO MOBILE: Diminui a fonte para caber na tela ---
+      @media (max-width: 768px) {
+        font-size: 10px !important;
+        padding: 2px 0 !important;
+        overflow: hidden; // Corta se for muito grande
+        white-space: nowrap; // Impede quebra de linha estranha
+        text-overflow: clip; // Evita reticências (...) ocupando espaço
+      }
     }
+
+    // COLUNA DE HORÁRIOS (Barra Lateral Esquerda)
+    .rbc-time-view .rbc-time-gutter {
+      // --- CORREÇÃO MOBILE: Deixa a coluna mais estreita ---
+      @media (max-width: 768px) {
+        width: 35px !important;
+        min-width: 35px !important;
+      }
+    }
+
+    // TEXTO DA HORA (06:00, 07:00...)
     .rbc-time-gutter .rbc-timeslot-group .rbc-label {
       color: #444444 !important;
       font-weight: bold;
+
+      // --- CORREÇÃO MOBILE: Fonte menor ---
+      @media (max-width: 768px) {
+        font-size: 10px !important;
+        padding: 0 2px !important;
+      }
     }
 
-    // Toolbar
+    // Toolbar Antiga (Opcional - caso a Custom não carregue, mantém estilo básico)
     .rbc-toolbar button {
       color: #444 !important;
       border: 1px solid #ddd !important;
@@ -45,27 +74,20 @@
       color: white !important;
       border-color: $lightPrimaryColor !important;
     }
-    .rbc-toolbar-label {
-      color: $darkPrimaryColor !important;
-      font-weight: bold;
-      font-size: 1.5rem;
-      text-transform: uppercase !important;
-    }
 
-    // --- VISÃO DE MÊS (AJUSTADA PARA TEXTO) ---
+    // --- VISÃO DE MÊS ---
     .rbc-month-view {
       .rbc-event {
-        background-color: transparent !important; // Sem fundo colorido
+        background-color: transparent !important;
         box-shadow: none !important;
-        padding: 0 5px !important; // Um pouco de espaço lateral
+        padding: 0 5px !important;
       }
-      // Removemos o text-align center global para permitir alinhar a esquerda
       .rbc-event-content {
         text-align: left;
       }
     }
 
-    // --- VISÃO DE SEMANA/DIA ---
+    // --- VISÃO DE SEMANA/DIA (Os Cards dos Agendamentos) ---
     .rbc-time-view {
       .rbc-event {
         border: 1px solid rgba(255, 255, 255, 0.4) !important;
@@ -93,56 +115,56 @@
       }
     }
 
+    // Linhas da grade
     .rbc-day-slot .rbc-time-slot {
       border-top: 1px solid #f0f0f0 !important;
     }
+    // Fundo do dia atual
     .rbc-today {
       background-color: rgba($lightPrimaryColor, 0.05) !important;
     }
   }
 }
 
-// --- CLASSES DO COMPONENTE ---
+// --- CLASSES LOCAIS (Usadas nos componentes Customizados) ---
 
-// Container do Evento no Mês (Flexbox para alinhar Flor + Texto)
+// Mês
 .monthEvent {
   display: flex;
-  align-items: center; // Centraliza verticalmente
-  justify-content: flex-start; // Alinha a esquerda
-  gap: 5px; // Espaço entre a flor e o nome
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
   width: 100%;
   cursor: pointer;
   transition: transform 0.2s;
 
   &:hover {
-    transform: scale(1.02); // Leve zoom ao passar o mouse
+    transform: scale(1.02);
   }
 }
 
-// A Florzinha
 .monthIcon {
   font-size: 1.1rem;
   line-height: 1;
 }
 
-// O Nome da Pessoa
 .monthText {
-  color: $darkPrimaryColor; // Rosa Escuro
+  color: $darkPrimaryColor;
   font-weight: 700;
   font-size: 0.85rem;
-  white-space: nowrap; // Não quebra linha
-  overflow: hidden; // Esconde se for muito grande
-  text-overflow: ellipsis; // Coloca "..." no final
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-// Semana (Texto Simples)
+// Semana
 .timeEvent {
   font-size: 0.8rem;
   line-height: 1.1;
   overflow: hidden;
 }
 
-// --- CLASSES eventPropGetter ---
+// Classes passadas via eventPropGetter
 .eventBlockMonth {
   background-color: transparent !important;
   border: none !important;

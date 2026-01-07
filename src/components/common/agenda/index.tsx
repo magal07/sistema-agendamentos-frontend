@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Calendar, momentLocalizer, View, Views } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import moment from "moment";
@@ -7,7 +7,6 @@ import { appointmentService } from "../../../services/appointmentService";
 import profileService from "../../../services/profileService";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
-// Importando componentes do Reactstrap para o Modal
 import {
   Modal,
   ModalHeader,
@@ -17,10 +16,23 @@ import {
   Badge,
 } from "reactstrap";
 import styles from "./styles.module.scss";
+import CustomToolbar from "../customToolbar";
 
 moment.locale("pt-br");
 const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(Calendar);
+
+// --- CORREÇÃO DO VISUAL DOS DIAS NO MOBILE ---
+const customFormats = {
+  dayFormat: (date: Date, culture: any, localizer: any) => {
+    // Se for mobile (menor que 768px), mostra só o número (ex: "04")
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      return localizer.format(date, "DD", culture);
+    }
+    // No desktop mostra completo (ex: "04 Dom")
+    return localizer.format(date, "DD ddd", culture);
+  },
+};
 
 const AgendaComponent = () => {
   const [events, setEvents] = useState<any[]>([]);
@@ -102,7 +114,6 @@ const AgendaComponent = () => {
     }
   };
 
-  // --- NOVO: FUNÇÃO PARA ABRIR O MODAL ---
   const handleSelectEvent = (event: any) => {
     setSelectedEvent(event);
     setModalOpen(true);
@@ -110,7 +121,7 @@ const AgendaComponent = () => {
 
   const toggleModal = () => {
     setModalOpen(!modalOpen);
-    if (modalOpen) setSelectedEvent(null); // Limpa ao fechar
+    if (modalOpen) setSelectedEvent(null);
   };
 
   const CustomEvent = ({ event }: any) => {
@@ -122,7 +133,6 @@ const AgendaComponent = () => {
         </div>
       );
     }
-    // Mobile: Mesmo que o texto corte, o usuário sabe que pode clicar
     return (
       <div className={styles.timeEvent}>
         <strong>{event.title}</strong>
@@ -147,13 +157,23 @@ const AgendaComponent = () => {
     };
   };
 
-  // Helper para cor do status no Modal
   const getStatusBadge = (status: string) => {
     if (status === "confirmed")
       return <Badge color="success">Confirmado</Badge>;
     if (status === "cancelled") return <Badge color="danger">Cancelado</Badge>;
     return <Badge color="warning">Pendente</Badge>;
   };
+
+  // Configuração da Toolbar customizada
+  const { components } = useMemo(
+    () => ({
+      components: {
+        event: CustomEvent,
+        toolbar: CustomToolbar,
+      },
+    }),
+    [view]
+  );
 
   return (
     <div className={styles.calendarContainer}>
@@ -169,7 +189,10 @@ const AgendaComponent = () => {
         min={minTime}
         max={maxTime}
         draggableAccessor={() => userRole !== "client"}
-        components={{ event: CustomEvent }}
+        // Componentes customizados (Toolbar)
+        components={components}
+        // Formatos customizados (Corrige o cabeçalho mobile)
+        formats={customFormats}
         step={30}
         timeslots={2}
         selectable={true}
@@ -192,7 +215,6 @@ const AgendaComponent = () => {
         }}
       />
 
-      {/* --- MODAL DE DETALHES --- */}
       <Modal isOpen={modalOpen} toggle={toggleModal} centered size="sm">
         <ModalHeader toggle={toggleModal}>
           Detalhes do Agendamento 🌸
@@ -220,7 +242,6 @@ const AgendaComponent = () => {
 
               <hr className="my-2" />
 
-              {/* Se for Admin/Profissional mostra o cliente, se for Cliente mostra o Profissional */}
               {userRole === "client" ? (
                 <div>
                   <strong>Profissional:</strong> <br />
