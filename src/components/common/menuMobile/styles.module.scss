@@ -79,3 +79,16 @@
     margin-bottom: 0px; // Remove margem extra para compensar a altura menor
   }
 }
+
+.eventBlockTime {
+  color: white !important;
+  border-radius: 5px !important;
+  border: none !important;
+  display: block !important;
+  cursor: pointer !important; // <--- Garante que o usuário saiba que é clicável
+
+  // Otimização para toque mobile
+  &:active {
+    opacity: 0.8;
+  }
+}
