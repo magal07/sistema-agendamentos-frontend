@@ -8,6 +8,7 @@ import PageSpinner from "../src/components/common/spinner";
 import PasswordForm from "../src/components/profile/password";
 import UserForm from "../src/components/profile/user";
 import styles from "../styles/profile.module.scss";
+import MenuMobile from "../src/components/common/menuMobile";
 
 const UserInfo = function () {
   const [form, setForm] = useState("userForm");
@@ -65,6 +66,8 @@ const UserInfo = function () {
         <div className={styles.footer}>
           <Footer />
         </div>
+
+        <MenuMobile />
       </main>
     </>
   );

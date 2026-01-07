@@ -16,6 +16,7 @@ import styles from "../styles/agenda.module.scss";
 import availabilityService from "../src/services/availabilityService";
 import profileService from "../src/services/profileService"; // IMPORTANTE
 import { useRouter } from "next/router";
+import MenuMobile from "../src/components/common/menuMobile";
 
 const DAYS = [
   { id: 0, name: "Domingo" },
@@ -236,6 +237,7 @@ export default function AvailabilityPage() {
             </Form>
           </div>
         </Container>
+        <MenuMobile />
       </main>
     </>
   );

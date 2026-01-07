@@ -9,6 +9,7 @@ import profileService from "../src/services/profileService";
 import { format, isAfter, getHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import styles from "../styles/homeAuth.module.scss";
+import MenuMobile from "../src/components/common/menuMobile";
 
 // --- Componentes de Ícones (Simples) ---
 const Icons = {
@@ -283,7 +284,7 @@ export default function HomeAuth() {
                 <button
                   className={styles.actionBtn}
                   onClick={() =>
-                    window.open("https://wa.me/551100000000", "_blank")
+                    window.open("https://wa.me/5511948683746", "_blank")
                   }
                 >
                   <div className={`${styles.iconCircle} ${styles.whatsapp}`}>
@@ -406,12 +407,14 @@ export default function HomeAuth() {
                   flexWrap: "wrap",
                 }}
               >
-                <button
-                  className={styles.btnPrimary}
-                  onClick={() => router.push("/reports/financial")}
-                >
-                  📊 Ir para Relatórios
-                </button>
+                {(userRole === "admin" || userRole === "company_admin") && (
+                  <button
+                    className={styles.btnPrimary}
+                    onClick={() => router.push("/reports/financial")}
+                  >
+                    📊 Ir para Relatórios
+                  </button>
+                )}
 
                 <button
                   className={styles.btnPrimary}
@@ -425,6 +428,7 @@ export default function HomeAuth() {
         </Container>
 
         <Footer />
+        <MenuMobile />
       </main>
     </>
   );

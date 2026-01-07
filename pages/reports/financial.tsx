@@ -1,8 +1,10 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router"; // 1. Import do Router
 import { Container, Row, Col, Button, Input } from "reactstrap";
 import HeaderAuth from "../../src/components/common/headerAuth";
 import Footer from "../../src/components/common/footer";
+import PageSpinner from "../../src/components/common/spinner"; // 2. Import do Spinner
 import styles from "../../styles/reports.module.scss";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -10,6 +12,7 @@ import { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { professionalService } from "../../src/services/professionalService";
+import profileService from "../../src/services/profileService"; // 3. Import do ProfileService
 import reportsService, {
   DashboardData,
 } from "../../src/services/reportsService";
@@ -23,6 +26,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import MenuMobile from "../../src/components/common/menuMobile";
 
 // Configuração do Chart.js
 ChartJS.register(
@@ -37,7 +41,9 @@ ChartJS.register(
 registerLocale("pt-BR", ptBR);
 
 export default function FinancialReport() {
-  const [loading, setLoading] = useState(false);
+  const router = useRouter(); // Hook de navegação
+  const [pageLoading, setPageLoading] = useState(true); // Loading de Segurança (Tela inteira)
+  const [loading, setLoading] = useState(false); // Loading do Filtro (Apenas botão/dados)
 
   // Filtros
   const [startDate, setStartDate] = useState(startOfMonth(new Date()));
@@ -48,20 +54,47 @@ export default function FinancialReport() {
   // Dados do Relatório
   const [data, setData] = useState<DashboardData | null>(null);
 
-  // Busca lista de profissionais ao carregar
+  // --- EFEITO DE INICIALIZAÇÃO E SEGURANÇA ---
   useEffect(() => {
-    professionalService
-      .getAll()
-      .then((res) => {
-        // Ajuste conforme o retorno do seu service (pode ser res.data ou res direto)
-        setProfessionals(Array.isArray(res) ? res : res.rows || []);
-      })
-      .catch((err) => console.error("Erro ao buscar profissionais", err));
+    const initPage = async () => {
+      try {
+        // 1. Verifica quem é o usuário
+        const user = await profileService.fetchCurrent();
 
-    // Carrega dados iniciais
-    handleFilter();
+        // 2. Trava de Segurança
+        if (user.role !== "admin" && user.role !== "company_admin") {
+          router.push("/home"); // Redireciona quem não tem permissão
+          return;
+        }
+
+        // 3. Se passou, carrega os Profissionais
+        const profResponse = await professionalService.getAll();
+        setProfessionals(
+          Array.isArray(profResponse) ? profResponse : profResponse.rows || []
+        );
+
+        // 4. Carrega os dados iniciais do relatório (Mês atual)
+        setLoading(true);
+        const reportResult = await reportsService.getFinancialDashboard({
+          startDate: format(startOfMonth(new Date()), "yyyy-MM-dd"),
+          endDate: format(endOfMonth(new Date()), "yyyy-MM-dd"),
+          professionalId: undefined, // Começa vendo todos
+        });
+        setData(reportResult);
+        setLoading(false);
+
+        // 5. Libera a tela
+        setPageLoading(false);
+      } catch (error) {
+        console.error("Erro na inicialização", error);
+        router.push("/"); // Se der erro de token, joga pro login
+      }
+    };
+
+    initPage();
   }, []);
 
+  // --- AÇÃO DO BOTÃO FILTRAR ---
   const handleFilter = async () => {
     setLoading(true);
     try {
@@ -130,6 +163,11 @@ export default function FinancialReport() {
       },
     },
   };
+
+  // BLOQUEIO VISUAL ENQUANTO VERIFICA
+  if (pageLoading) {
+    return <PageSpinner />;
+  }
 
   return (
     <>
@@ -252,6 +290,7 @@ export default function FinancialReport() {
           </div>
         </Container>
         <Footer />
+        <MenuMobile />
       </main>
     </>
   );

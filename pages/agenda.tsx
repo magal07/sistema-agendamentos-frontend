@@ -6,6 +6,7 @@ import AgendaComponent from "../src/components/common/agenda";
 import { Container, Button, Spinner } from "reactstrap"; // Adicione Button aqui
 import profileService from "../src/services/profileService";
 import styles from "../styles/agenda.module.scss";
+import MenuMobile from "../src/components/common/menuMobile";
 
 const AgendaPage = () => {
   const router = useRouter();
@@ -76,6 +77,7 @@ const AgendaPage = () => {
 
           <AgendaComponent />
         </Container>
+        <MenuMobile />
       </main>
     </>
   );

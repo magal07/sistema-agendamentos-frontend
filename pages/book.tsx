@@ -29,6 +29,7 @@ import { professionalService } from "../src/services/professionalService";
 import availabilityService from "../src/services/availabilityService";
 import companyService, { Company } from "../src/services/companyService";
 import ToastComponent from "../src/components/common/toast";
+import MenuMobile from "../src/components/common/menuMobile";
 
 registerLocale("pt-BR", ptBR);
 
@@ -531,6 +532,8 @@ export default function Book() {
           isOpen={toastIsOpen}
           message={toastMessage}
         />
+
+        <MenuMobile />
       </main>
     </>
   );
