@@ -1,12 +1,18 @@
 @import "../../../../styles/colors.module.scss";
 
 .nav {
+  background-color: $blackGray; // A cor vem pra cá
+  border-bottom: 1px solid $lightGray;
+  width: 100%; // Garante largura total
+  // Removemos padding, display flex, etc daqui
+}
+
+// O Container Interno: Responsável por alinhar o conteúdo e dar espaçamento
+.navContainer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 0;
-  background-color: $blackGray; // Fundo Claro/Branco
-  border-bottom: 1px solid $lightGray;
+  padding: 1.5rem 0; // O padding vertical fica aqui
 }
 
 // --- NOVO: Link da Agenda ---

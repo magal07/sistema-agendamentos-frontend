@@ -58,55 +58,60 @@ const HeaderAuth = function () {
 
   return (
     <>
-      <Container className={styles.nav}>
-        <Link href="/home">
-          <img src="/logo.png" alt="logo" className={styles.imgLogoNav} />
-        </Link>
-        <div className="d-flex align-items-center">
-          {/* LINK MINHA AGENDA */}
-          {(userRole === "professional" ||
-            userRole === "admin" ||
-            userRole === "client") && ( // Obs: Corrigi a lógica aqui que tinha uma string "client" solta
-            <Link href="/agenda" style={{ textDecoration: "none" }}>
-              <div className={styles.agendaLink}>
-                <span>MINHA AGENDA</span>
-              </div>
-            </Link>
-          )}
-
-          <InstallButton />
-
-          {/* 3. LÓGICA VISUAL: FOTO OU INICIAIS */}
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt="profile"
-              className={styles.userProfile}
-              onClick={handleOpenModal}
-              // Importante: object-fit cover para a foto não ficar achatada
-              style={{ objectFit: "cover" }}
-            />
-          ) : (
-            <p className={styles.userProfile} onClick={handleOpenModal}>
-              {initials}
-            </p>
-          )}
-        </div>
-        <Modal
-          isOpen={modalOpen}
-          onRequestClose={handleCloseModal}
-          shouldCloseOnEsc={true}
-          className={styles.modal}
-          overlayClassName={styles.overlayModal}
-        >
-          <Link href="/profile">
-            <p className={styles.modalLink}>Meus Dados</p>
+      {/* 1. DIV EXTERNA: Pega a cor de fundo (styles.nav) e ocupa 100% da largura */}
+      <div className={styles.nav}>
+        {/* 2. CONTAINER INTERNO: Centraliza os itens (styles.navContainer) */}
+        <Container className={styles.navContainer}>
+          <Link href="/home">
+            <img src="/logo.png" alt="logo" className={styles.imgLogoNav} />
           </Link>
-          <p className={styles.modalLink} onClick={handleLogout}>
-            Sair
-          </p>
-        </Modal>
-      </Container>
+
+          <div className="d-flex align-items-center">
+            {/* LINK MINHA AGENDA */}
+            {(userRole === "professional" ||
+              userRole === "admin" ||
+              userRole === "client") && (
+              <Link href="/agenda" style={{ textDecoration: "none" }}>
+                <div className={styles.agendaLink}>
+                  <span>MINHA AGENDA</span>
+                </div>
+              </Link>
+            )}
+
+            <InstallButton />
+
+            {/* FOTO OU INICIAIS */}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="profile"
+                className={styles.userProfile}
+                onClick={handleOpenModal}
+                style={{ objectFit: "cover" }}
+              />
+            ) : (
+              <p className={styles.userProfile} onClick={handleOpenModal}>
+                {initials}
+              </p>
+            )}
+          </div>
+
+          <Modal
+            isOpen={modalOpen}
+            onRequestClose={handleCloseModal}
+            shouldCloseOnEsc={true}
+            className={styles.modal}
+            overlayClassName={styles.overlayModal}
+          >
+            <Link href="/profile">
+              <p className={styles.modalLink}>Meus Dados</p>
+            </Link>
+            <p className={styles.modalLink} onClick={handleLogout}>
+              Sair
+            </p>
+          </Modal>
+        </Container>
+      </div>
     </>
   );
 };
