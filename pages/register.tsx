@@ -52,24 +52,45 @@ const Register = function () {
     const params = {
       firstName,
       lastName,
-      phone: cleanMask(phone), // Limpa a máscara antes de enviar ((11) 9... -> 119...)
+      phone: cleanMask(phone),
       birth,
       email,
       password,
-      cpf: cleanMask(cpf), // Limpa a máscara (123.456... -> 123456...)
+      cpf: cleanMask(cpf),
     };
 
     try {
-      const { status } = await authService.register(params);
+      // O authService.register agora retorna o objeto com { token, user, ... }
+      const data = await authService.register(params);
 
-      if (status === 201) {
+      // VERIFICAÇÃO DO AUTO-LOGIN
+      if (data.token) {
+        // 1. Salva o token igualzinho ao Login (nome da chave deve bater com o authService)
+        sessionStorage.setItem("onebitflix-token", data.token);
+
+        // 2. Opcional: Salvar dados do usuário para aparecer no perfil sem refresh
+        // (Isso ajuda se você usar localStorage para exibir nome no header)
+        if (data.id) {
+          localStorage.setItem("user-data", JSON.stringify(data));
+        }
+
+        // 3. Feedback visual
+        setToastType("success");
+        setToastMessage("Cadastro realizado! Entrando...");
+        setToastIsOpen(true);
+
+        // 4. Redireciona para a Home
+        setTimeout(() => {
+          router.push("/home");
+        }, 1500); // Delay curto para ler a mensagem
+      } else {
+        // Fallback caso o backend não mande token (comportamento antigo)
         router.push("/login?registred=true");
       }
     } catch (error: any) {
       setToastType("error");
       setToastIsOpen(true);
       setTimeout(() => setToastIsOpen(false), 3000);
-      // Pega a mensagem de erro do backend (ex: "Email já cadastrado")
       setToastMessage(
         error.response?.data?.message || "Erro ao realizar cadastro."
       );
