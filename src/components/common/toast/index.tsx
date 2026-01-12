@@ -1,16 +1,19 @@
+// src/components/common/toast/index.tsx
 import { Toast, ToastBody } from "reactstrap";
-import styles from "./styles.module.scss"; // Vamos criar este arquivo
+import styles from "./styles.module.scss";
 
 interface props {
   isOpen: boolean;
   message: string;
-  type: "success" | "error"; // Agora usamos tipos específicos
+  type: "success" | "error" | "warning";
 }
 
 const ToastComponent = function ({ isOpen, message, type }: props) {
-  // Definimos a classe baseada no tipo
-  const toastClass =
-    type === "success" ? styles.toastSuccess : styles.toastError;
+  let toastClass = "";
+
+  if (type === "success") toastClass = "bg-success";
+  else if (type === "error") toastClass = "bg-danger";
+  else if (type === "warning") toastClass = "bg-warning";
 
   return (
     <Toast

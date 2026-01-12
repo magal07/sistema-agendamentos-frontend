@@ -32,6 +32,15 @@ export const appointmentService = {
     return res;
   },
 
+  complete: async (id: number, datetime: Date) => {
+    // Envia status completed e a data ajustada (caso a profissional tenha mudado)
+    const res = await api.put(`/appointments/${id}`, {
+      status: "completed",
+      appointmentDate: datetime.toISOString(),
+    });
+    return res.data;
+  },
+
   // Busca agendamentos filtrando por data (Otimizado para o calendário)
   getAll: async (params: ListParams) => {
     const response = await api.get("/appointments", {

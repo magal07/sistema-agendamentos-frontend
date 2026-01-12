@@ -142,13 +142,22 @@ const AgendaComponent = () => {
 
   const eventPropGetter = (event: any) => {
     const status = event.resource?.status;
+
+    // 1. Cor Padrão (Rosa) - Para agendamentos confirmados/futuros
     let backgroundColor = "#b06075";
 
-    if (status === "confirmed") backgroundColor = "#28a745";
-    if (status === "cancelled") backgroundColor = "#dc3545";
+    // 2. Se já foi REALIZADO -> Verde
+    if (status === "completed") {
+      backgroundColor = "#28a745";
+    }
+
+    // 3. Se foi CANCELADO -> Vermelho
+    if (status === "cancelled") {
+      backgroundColor = "#dc3545";
+    }
 
     if (view === Views.MONTH) {
-      return { className: styles.eventBlockMonth, style: {} };
+      return { className: styles.eventBlockMonth, style: { backgroundColor } };
     }
 
     return {
@@ -158,12 +167,19 @@ const AgendaComponent = () => {
   };
 
   const getStatusBadge = (status: string) => {
+    // Adiciona o status "Realizado"
+    if (status === "completed") return <Badge color="success">Realizado</Badge>;
+
+    // "Confirmado" agora usa a cor primária (azul) ou mantém padrão se preferir,
+    // mas o success deixamos exclusivo para o realizado.
     if (status === "confirmed")
-      return <Badge color="success">Confirmado</Badge>;
+      return <Badge color="primary">Confirmado</Badge>;
+
     if (status === "cancelled") return <Badge color="danger">Cancelado</Badge>;
+
+    // Qualquer outro status (ex: pending)
     return <Badge color="warning">Pendente</Badge>;
   };
-
   // Configuração da Toolbar customizada
   const { components } = useMemo(
     () => ({
