@@ -529,6 +529,15 @@ export default function HomeAuth() {
                     📊 Relatórios
                   </button>
                 )}
+
+                {/* BOTÃO AGENDAR CLIENTE */}
+                <button
+                  className={styles.btnPrimary}
+                  onClick={() => router.push("/schedule-client")}
+                >
+                  ➕ Agendar Cliente
+                </button>
+                {/* Botão Agenda */}
                 <button
                   className={styles.btnPrimary}
                   onClick={() => (window.location.href = "/agenda")}

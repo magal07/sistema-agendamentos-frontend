@@ -12,6 +12,7 @@ import {
 import { format, parseISO } from "date-fns";
 import api from "../../services/api";
 import { appointmentService } from "../../services/appointmentService";
+import styles from "./styles.module.scss"; // Importando o CSS
 
 export default function ProfessionalAgenda() {
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -25,7 +26,7 @@ export default function ProfessionalAgenda() {
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
-  // --- 1. ESTADO DO MODAL GLOBAL (Substituindo o Toast simples para alertas maiores) ---
+  // --- 1. ESTADO DO MODAL GLOBAL ---
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -36,7 +37,6 @@ export default function ProfessionalAgenda() {
 
   const closeModal = () => setModal({ ...modal, isOpen: false });
 
-  // Helper para abrir o modal de alerta/sucesso
   const showAlert = (
     type: "success" | "warning" | "alert",
     title: string,
@@ -61,12 +61,11 @@ export default function ProfessionalAgenda() {
     }
   };
 
-  // --- 2. LÓGICA DE CANCELAMENTO (Professional) ---
+  // --- 2. LÓGICA DE CANCELAMENTO ---
   const executeCancel = async (id: number) => {
     try {
       const res = await api.delete(`/appointments/${id}`);
 
-      // Verifica Warning
       if (res.data && res.data.type === "warning") {
         showAlert("warning", "Aviso", res.data.message);
       } else {
@@ -121,13 +120,24 @@ export default function ProfessionalAgenda() {
 
   return (
     <div className="py-4">
-      <h4 className="mb-4">Painel de Controle 🛠️</h4>
+      {/* HEADER: Título e Botão Ver Calendário alinhados */}
+      <div className={styles.headerContainer}>
+        <h4 className="mb-0">Painel de Controle 🛠️</h4>
+        <Button
+          className={styles.btnCalendar}
+          outline
+          onClick={() => (window.location.href = "/agenda")}
+        >
+          📅 Ver Calendário
+        </Button>
+      </div>
 
       {loading ? (
-        <p>Carregando agenda...</p>
+        <p className="text-center">Carregando agenda...</p>
       ) : (
         <div className="table-responsive">
-          <Table hover className="align-middle">
+          {/* Adicionada a classe responsiveTable do CSS module */}
+          <Table hover className={`align-middle ${styles.responsiveTable}`}>
             <thead className="table-dark">
               <tr>
                 <th>Horário</th>
@@ -143,21 +153,30 @@ export default function ProfessionalAgenda() {
                   key={appt.id}
                   style={{ opacity: appt.status === "cancelled" ? 0.5 : 1 }}
                 >
-                  <td>
-                    <strong>
-                      {format(parseISO(appt.appointmentDate), "dd/MM")}
-                    </strong>{" "}
-                    <br />
-                    {format(parseISO(appt.appointmentDate), "HH:mm")}
+                  {/* data-label é usado pelo CSS no mobile */}
+                  <td data-label="Horário">
+                    <div>
+                      <strong>
+                        {format(parseISO(appt.appointmentDate), "dd/MM")}
+                      </strong>
+                      <br className={styles.hideMobile} />{" "}
+                      {format(parseISO(appt.appointmentDate), "HH:mm")}
+                    </div>
                   </td>
-                  <td>
-                    {appt.client?.firstName || "Cliente"} <br />
-                    <small className="text-muted">{appt.client?.phone}</small>
+
+                  <td data-label="Cliente">
+                    <div>
+                      {appt.client?.firstName || "Cliente"}
+                      <br className={styles.hideMobile} />{" "}
+                      <small className="text-muted">{appt.client?.phone}</small>
+                    </div>
                   </td>
-                  <td>
+
+                  <td data-label="Serviço">
                     {appt.Service?.name || appt.service?.name || "Serviço"}
                   </td>
-                  <td>
+
+                  <td data-label="Status">
                     {appt.status === "confirmed" && (
                       <Badge color="primary">Confirmado</Badge>
                     )}
@@ -168,10 +187,11 @@ export default function ProfessionalAgenda() {
                       <Badge color="danger">Cancelado</Badge>
                     )}
                   </td>
-                  <td className="text-end">
+
+                  <td className="text-end" data-label="Ações">
                     {appt.status !== "cancelled" &&
                       appt.status !== "completed" && (
-                        <>
+                        <div className={styles.actionsGroup}>
                           <Button
                             size="sm"
                             color="success"
@@ -189,7 +209,7 @@ export default function ProfessionalAgenda() {
                           >
                             🗑️
                           </Button>
-                        </>
+                        </div>
                       )}
                   </td>
                 </tr>
@@ -199,10 +219,11 @@ export default function ProfessionalAgenda() {
         </div>
       )}
 
-      {/* MODAL DE CONCLUSÃO (ESPECÍFICO DESTA TELA) */}
+      {/* MODAL DE CONCLUSÃO */}
       <Modal
         isOpen={modalComplete}
         toggle={() => setModalComplete(!modalComplete)}
+        centered
       >
         <ModalHeader>Finalizar Serviço</ModalHeader>
         <ModalBody>
@@ -230,7 +251,7 @@ export default function ProfessionalAgenda() {
         </ModalFooter>
       </Modal>
 
-      {/* 3. MODAL GLOBAL DE AVISOS/CONFIRMAÇÃO */}
+      {/* MODAL GLOBAL */}
       <Modal isOpen={modal.isOpen} toggle={closeModal} centered>
         <ModalHeader
           toggle={closeModal}

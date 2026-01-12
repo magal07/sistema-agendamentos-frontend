@@ -177,3 +177,49 @@
   border: none !important;
   display: block !important;
 }
+
+/* --- Ajuste para Telas Muito Pequenas (até 320px) --- */
+@media (max-width: 320px) {
+  // Ajusta o container principal da agenda/grid
+  .agendaContainer,
+  .gridContainer,
+  .listContainer {
+    // Verifique qual nome de classe você usa no grid principal
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important; // Força 1 coluna se for grid
+    padding: 10px 5px !important; // Reduz padding lateral
+    gap: 10px !important;
+  }
+
+  // Ajusta os Cards Individuais
+  .agendaCard,
+  .appointmentCard,
+  .card {
+    width: 100% !important;
+    min-width: 0 !important; // Impede que o card force a largura
+    padding: 12px !important;
+
+    // Ajusta o tamanho da fonte interna para não quebrar
+    h3,
+    h4 {
+      font-size: 1rem !important;
+    }
+
+    p,
+    span {
+      font-size: 0.8rem !important;
+    }
+  }
+
+  // Se tiver botões lado a lado, coloca um embaixo do outro
+  .actions,
+  .buttonGroup {
+    flex-direction: column !important;
+    gap: 8px !important;
+
+    button {
+      width: 100% !important;
+    }
+  }
+}

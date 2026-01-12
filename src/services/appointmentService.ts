@@ -5,7 +5,6 @@ interface ListParams {
   end: string;
 }
 
-// Tipagem para o reagendamento
 interface RescheduleParams {
   start: Date;
   end: Date;
@@ -14,26 +13,34 @@ interface RescheduleParams {
 export const appointmentService = {
   // Meus agendamentos
   getMyList: async () => {
-    const res = await api.get("/appointments");
+    const res = await api.get("/appointments"); // ou /appointments dependendo da sua rota
     return res.data;
   },
-  // Criar agendamento
-  create: async (professionalId: number, serviceId: number, date: Date) => {
+
+  // --- CORREÇÃO AQUI: Adicionado customClientId como 4º argumento opcional ---
+  create: async (
+    professionalId: number,
+    serviceId: number,
+    date: Date | string,
+    customClientId?: number // <--- Importante para o "Agendar Cliente"
+  ) => {
+    const appointmentDate = date instanceof Date ? date.toISOString() : date;
+
     const res = await api.post("/appointments", {
       professionalId,
       serviceId,
-      appointmentDate: date.toISOString(),
+      appointmentDate,
+      customClientId, // Envia para o backend se existir
     });
     return res.data;
   },
-  // Cancelar
+
   cancel: async (id: number) => {
     const res = await api.delete(`/appointments/${id}`);
     return res;
   },
 
   complete: async (id: number, datetime: Date) => {
-    // Envia status completed e a data ajustada (caso a profissional tenha mudado)
     const res = await api.put(`/appointments/${id}`, {
       status: "completed",
       appointmentDate: datetime.toISOString(),
@@ -41,7 +48,6 @@ export const appointmentService = {
     return res.data;
   },
 
-  // Busca agendamentos filtrando por data (Otimizado para o calendário)
   getAll: async (params: ListParams) => {
     const response = await api.get("/appointments", {
       params: {
@@ -52,7 +58,6 @@ export const appointmentService = {
     return response.data;
   },
 
-  // Reagendar (Drag and Drop)
   reschedule: async (id: number, params: RescheduleParams) => {
     const response = await api.patch(`/appointments/${id}/reschedule`, {
       start: params.start,

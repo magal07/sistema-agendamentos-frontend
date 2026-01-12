@@ -517,4 +517,10 @@ $radius: 16px;
     margin-bottom: 25px;
     font-size: 0.95rem;
   }
+
+  button.btnPrimary {
+    min-width: 240px;
+    flex: 1; // Opcional: faz eles crescerem igualmente se estiverem lado a lado
+    max-width: 300px; // Limite para não ficarem gigantes em telas grandes
+  }
 }

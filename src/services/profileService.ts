@@ -44,6 +44,14 @@ const profileService = {
 
     return res.data; // Retorna o usuário atualizado com a nova URL
   },
+
+  searchClientByCpf: async (cpf: string) => {
+    // Remove caracteres não numéricos antes de enviar, se necessário, ou envia com máscara
+    // O backend que criamos remove, mas enviar limpo é boa prática
+    const cleanCpf = cpf.replace(/\D/g, "");
+    const res = await api.get(`/users/search/cpf?cpf=${cleanCpf}`);
+    return res.data;
+  },
 };
 
 export default profileService;

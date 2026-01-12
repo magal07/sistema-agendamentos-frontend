@@ -1,0 +1,93 @@
+@import "../../../styles/colors.module.scss";
+
+// Header: Título e Botão
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap; // Permite quebrar linha se a tela for muito pequena
+  gap: 15px;
+}
+
+// Botão Calendário customizado com as cores do projeto
+.btnCalendar {
+  border-color: $lightPrimaryColor;
+  color: $lightPrimaryColor;
+  font-weight: 600;
+  white-space: nowrap; // Evita quebra do texto do botão
+
+  &:hover {
+    background-color: $lightPrimaryColor;
+    color: #fff;
+    border-color: $lightPrimaryColor;
+  }
+}
+
+// --- TABELA RESPONSIVA (TABLE TO CARDS) ---
+// Aplica a transformação para telas menores que tablets (e celulares de 300px)
+@media (max-width: 768px) {
+  .responsiveTable {
+    display: block; // Tabela vira bloco
+    width: 100%;
+
+    thead {
+      display: none; // Esconde o cabeçalho original
+    }
+
+    tbody {
+      display: block;
+      width: 100%;
+    }
+
+    tr {
+      display: block;
+      margin-bottom: 15px;
+      border: 1px solid #eaeaea;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+      padding: 15px;
+    }
+
+    td {
+      display: flex; // Flex para alinhar Título (esq) e Dado (dir)
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border: none;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.95rem;
+      text-align: right; // Alinha o valor à direita
+
+      &:last-child {
+        border-bottom: none;
+        justify-content: flex-end; // Ações à direita
+        padding-bottom: 0;
+        margin-top: 5px;
+      }
+
+      // O PULO DO GATO: Usa o atributo data-label para criar o título
+      &::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: 700;
+        color: #666;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        margin-right: 15px;
+        text-align: left;
+      }
+    }
+  }
+
+  // Ajustes nos textos dentro das células para mobile
+  .hideMobile {
+    display: none; // Esconde quebras de linha <br> desnecessárias no mobile
+  }
+
+  .actionsGroup {
+    display: flex;
+    gap: 10px;
+  }
+}

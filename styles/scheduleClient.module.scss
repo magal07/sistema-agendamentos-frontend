@@ -1,0 +1,387 @@
+@import "./colors.module.scss";
+
+.main {
+  background-color: $backgroundSite;
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+
+.pageTitle {
+  color: $darkGray;
+  font-weight: 800;
+  margin-bottom: 30px;
+  text-align: center;
+  font-size: 1.8rem;
+
+  span {
+    color: $lightPrimaryColor;
+  }
+}
+
+// --- BARRA DE PESQUISA ---
+.searchContainer {
+  background: $blackGray;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  margin-bottom: 30px;
+  border: 1px solid $lightGray;
+}
+
+.inputGroup {
+  display: flex;
+  gap: 10px;
+
+  input {
+    flex: 1;
+    border-radius: 8px;
+    border: 1px solid $lightGray;
+    padding: 12px 15px;
+    font-size: 1rem;
+    background: #fff;
+    color: $darkGray;
+    outline: none;
+    transition: all 0.2s;
+
+    &:focus {
+      border-color: $lightPrimaryColor;
+      box-shadow: 0 0 0 3px rgba($lightPrimaryColor, 0.15);
+    }
+
+    &::placeholder {
+      color: rgba($mediumGray, 0.5);
+    }
+  }
+
+  button {
+    background: $lightPrimaryColor;
+    border: none;
+    border-radius: 8px;
+    width: 55px;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background: $darkPrimaryColor;
+    }
+
+    &:disabled {
+      background: $lightGray;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// --- CLIENTE ENCONTRADO ---
+.clientFoundCard {
+  // Fundo sutil usando a cor primária com transparência
+  background: rgba($lightPrimaryColor, 0.05);
+  border: 1px solid $lightPrimaryColor;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  animation: fadeIn 0.4s ease;
+
+  .avatarPlaceholder {
+    width: 50px;
+    height: 50px;
+    background: $lightPrimaryColor;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba($lightPrimaryColor, 0.3);
+  }
+
+  .clientInfo {
+    h4 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: $darkGray;
+    }
+    p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: $mediumGray;
+      line-height: 1.4;
+    }
+  }
+}
+
+// --- FLUXO DE AGENDAMENTO (WIZARD) ---
+.stepContainer {
+  background: $blackGray;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid $lightGray;
+  height: 100%; // Para alinhar colunas
+}
+
+.stepTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: $darkGray;
+  border-bottom: 2px solid $lightGray;
+  padding-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  svg {
+    color: $lightSecondaryColor;
+  }
+}
+
+.selectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.selectionCard {
+  background: #fff;
+  border: 1px solid $lightGray;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+
+  &:hover {
+    border-color: $lightPrimaryColor;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  &.active {
+    background: $lightPrimaryColor;
+    color: #fff;
+    border-color: $lightPrimaryColor;
+    box-shadow: 0 4px 15px rgba($lightPrimaryColor, 0.4);
+
+    h5,
+    span {
+      color: #fff;
+    }
+  }
+
+  h5 {
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 700;
+    color: $darkGray;
+  }
+  span {
+    font-size: 0.75rem;
+    color: $mediumGray;
+    margin-top: 4px;
+    display: block;
+  }
+}
+
+// --- SLOTS DE HORÁRIO ---
+.timeSlotsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 5px;
+
+  // Scrollbar fina
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: $lightGray;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: $lightPrimaryColor;
+    border-radius: 3px;
+  }
+}
+
+.timeSlot {
+  padding: 8px 5px;
+  border: 1px solid $lightGray;
+  border-radius: 8px;
+  background: #fff;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  color: $mediumGray;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $lightPrimaryColor;
+    color: $lightPrimaryColor;
+    background: rgba($lightPrimaryColor, 0.05);
+  }
+
+  &.selected {
+    background: $lightPrimaryColor;
+    color: #fff;
+    border-color: $lightPrimaryColor;
+    box-shadow: 0 4px 10px rgba($lightPrimaryColor, 0.3);
+  }
+}
+
+// Resumo Final
+.summaryBox {
+  background: rgba($lightSecondaryColor, 0.1);
+  border: 1px solid rgba($lightSecondaryColor, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin-top: 30px;
+
+  p {
+    color: $darkGray;
+    font-size: 1.05rem;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  strong {
+    color: $darkPrimaryColor;
+  }
+}
+
+.btnPrimary {
+  background: $lightPrimaryColor;
+  color: #fff;
+  border: none;
+  padding: 14px 30px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1rem;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba($lightPrimaryColor, 0.4);
+
+  &:hover {
+    background: $darkPrimaryColor;
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    background: $lightGray;
+    color: $mediumGray;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- AJUSTES PARA MOBILE (Telas Pequenas < 480px) --- */
+@media (max-width: 480px) {
+  .pageTitle {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  // 1. Reduz padding excessivo
+  .searchContainer,
+  .stepContainer {
+    padding: 15px;
+
+    // CORREÇÃO DO ERRO: O input deve estar dentro da classe local
+    input[type="date"] {
+      width: 100%;
+    }
+  }
+
+  // 2. Ajusta o card do cliente encontrado
+  .clientFoundCard {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+    padding: 15px;
+
+    .avatarPlaceholder {
+      margin-bottom: 5px;
+    }
+
+    .clientInfo {
+      h4 {
+        font-size: 1rem;
+      }
+      p {
+        font-size: 0.85rem;
+      }
+    }
+
+    // Botão de selecionar/trocar
+    div:last-child {
+      margin-left: 0 !important;
+      width: 100%;
+      margin-top: 5px;
+
+      button {
+        width: 100%;
+        padding: 10px;
+      }
+    }
+  }
+
+  // 3. Grid de Profissionais/Serviços
+  .selectionGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .selectionCard {
+    min-height: 70px;
+    padding: 10px;
+
+    h5 {
+      font-size: 0.85rem;
+    }
+    span {
+      font-size: 0.7rem;
+    }
+  }
+
+  // 4. Slots de Horário
+  .timeSlotsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    gap: 8px;
+  }
+
+  .timeSlot {
+    font-size: 0.85rem;
+    padding: 8px 2px;
+  }
+}
