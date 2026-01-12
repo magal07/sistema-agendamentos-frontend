@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "reactstrap"; // <--- Import do Modal
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "reactstrap";
 import profileService from "../../../services/profileService";
 import styles from "./styles.module.scss";
 
@@ -13,7 +13,7 @@ import {
   FiSearch,
   FiList,
   FiClock,
-  FiLogOut, // <--- Adicionei o ícone de sair
+  FiLogOut, // <--- Adicionado
 } from "react-icons/fi";
 
 // Definição do tipo do item de menu
@@ -28,10 +28,11 @@ const MenuMobile = () => {
   const [role, setRole] = useState<string>("");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
-  // --- ESTADO DO MODAL DE SAIR ---
+  // --- ESTADO DO MODAL SAIR ---
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
+    // Busca o usuário para saber o cargo
     profileService
       .fetchCurrent()
       .then((user) => {
@@ -39,6 +40,7 @@ const MenuMobile = () => {
         defineMenu(user.role);
       })
       .catch(() => {
+        // Se não estiver logado, define menu público ou redireciona
         setRole("visitor");
       });
   }, []);
@@ -79,34 +81,34 @@ const MenuMobile = () => {
       ];
     }
 
-    // Adiciona o botão SAIR ao final de todos os menus
+    // --- ADICIONA O BOTÃO SAIR NO FINAL ---
     items.push({ label: "Sair", icon: <FiLogOut />, path: "logout" });
 
     setMenuItems(items);
   };
 
-  // --- FUNÇÃO DE NAVEGAÇÃO / LOGOUT ---
+  // Função para checar se o link está ativo
+  const isActive = (path: string) => {
+    // Se for o botão sair, podemos dar uma cor diferente (opcional)
+    if (path === "logout") return "";
+    return router.pathname === path ? styles.active : "";
+  };
+
+  // Função que intercepta o clique
   const handleNavigation = (path: string) => {
     if (path === "logout") {
-      setModalOpen(true); // Abre o modal em vez de navegar
+      setModalOpen(true); // Abre o modal
     } else {
       router.push(path);
     }
   };
 
-  // --- FUNÇÃO QUE EXECUTA O LOGOUT ---
   const confirmLogout = () => {
     sessionStorage.clear();
     router.push("/");
   };
 
-  // Função visual para link ativo
-  const isActive = (path: string) => {
-    if (path === "logout") return styles.logoutItem; // Estilo especial pro sair
-    return router.pathname === path ? styles.active : "";
-  };
-
-  if (!role) return null;
+  if (!role) return null; // Não mostra nada enquanto carrega
 
   return (
     <>
@@ -116,9 +118,10 @@ const MenuMobile = () => {
             key={index}
             className={`${styles.navItem} ${isActive(item.path)}`}
             onClick={() => handleNavigation(item.path)}
+            style={item.path === "logout" ? { color: "#e74c3c" } : {}} // Cor vermelha inline pro Sair (segurança)
           >
             <span className={styles.icon}>{item.icon}</span>
-            <span className={styles.label}>{item.label}</span>
+            <span className={styles.label}>{item.label || item.label}</span>
           </div>
         ))}
       </div>

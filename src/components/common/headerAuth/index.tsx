@@ -1,53 +1,59 @@
 import Link from "next/link";
 import {
   Container,
-  Form,
-  Input,
-  Modal,
+  Modal as ConfirmModal, // Renomeamos o Modal do Reactstrap para não conflitar
   ModalHeader,
   ModalBody,
   ModalFooter,
   Button,
-} from "reactstrap"; // <--- Adicione Modal e Button
+} from "reactstrap";
 import styles from "./styles.module.scss";
-import { FormEvent, useEffect, useState } from "react";
+import Modal from "react-modal"; // Modal do dropdown (mantido)
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import profileService from "../../../services/profileService";
+import InstallButton from "../../common/installButton";
+
+Modal.setAppElement("#__next");
 
 const HeaderAuth = function () {
   const router = useRouter();
-  const [initials, setInitials] = useState("");
-  const [searchName, setSearchName] = useState("");
+  const [modalOpen, setModalOpen] = useState(false); // Estado do Dropdown
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false); // Estado do Modal de Confirmação
 
-  // --- 1. ESTADO DO MODAL ---
-  const [modalOpen, setModalOpen] = useState(false);
+  const [initials, setInitials] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   useEffect(() => {
     profileService.fetchCurrent().then((user) => {
+      const role = user.role ? user.role.toLowerCase() : "";
       const firstNameInitial = user.firstName.slice(0, 1);
       const lastNameInitial = user.lastName.slice(0, 1);
       setInitials(firstNameInitial + lastNameInitial);
+      setUserRole(role);
+
+      if (user.avatarUrl) {
+        setAvatarUrl(`${process.env.NEXT_PUBLIC_BASE_URL}/${user.avatarUrl}`);
+      }
     });
   }, []);
 
-  const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    router.push(`/search?name=${searchName}`);
-    setSearchName("");
-  };
-
-  const handleSearchClick = () => {
-    router.push(`/search?name=${searchName}`);
-    setSearchName("");
-  };
-
-  // --- 2. FUNÇÃO QUE ABRE O MODAL ---
-  const handleLogoutClick = (e: any) => {
-    e.preventDefault();
+  const handleOpenModal = () => {
     setModalOpen(true);
   };
 
-  // --- 3. FUNÇÃO QUE SAI DE VERDADE ---
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
+
+  // 1. Ao clicar em Sair no dropdown, fecha o dropdown e abre a confirmação
+  const handleLogoutClick = () => {
+    setModalOpen(false);
+    setLogoutModalOpen(true);
+  };
+
+  // 2. Executa o logout de fato
   const confirmLogout = () => {
     sessionStorage.clear();
     router.push("/");
@@ -55,76 +61,87 @@ const HeaderAuth = function () {
 
   return (
     <>
-      <Container className={styles.nav}>
-        <Link href="/home">
-          <img
-            src="/logoVerboMAX.svg"
-            alt="logoEspaçoVirtuosa"
-            className={styles.imgLogoNav}
-          />
-        </Link>
-        <div className="d-flex align-items-center">
-          <Form onSubmit={handleSearch}>
-            <Input
-              name="search"
-              type="search"
-              placeholder="Pesquisar"
-              className={styles.input}
-              value={searchName}
-              onChange={(event) => {
-                setSearchName(event.currentTarget.value.toLowerCase());
-              }}
-            />
-          </Form>
-          <img
-            src="/homeAuth/iconSearch.svg"
-            alt="lupaHeader"
-            className={styles.searchImg}
-            onClick={handleSearchClick}
-          />
-          <p
-            className={styles.userProfile}
-            onClick={() => router.push("/profile")}
-          >
-            {initials}
-          </p>
+      <div className={styles.nav}>
+        <Container className={styles.navContainer}>
+          <Link href="/home">
+            <img src="/logo.png" alt="logo" className={styles.imgLogoNav} />
+          </Link>
 
-          {/* Botão Sair (ícone ou texto) - Adicionei um link simples aqui caso não tenha */}
-          <a
-            href="#"
-            onClick={handleLogoutClick}
-            className={styles.logoutLink}
-            title="Sair"
-          >
-            <img
-              src="/profile/iconUserAccount.svg"
-              alt="sair"
-              style={{ width: 20, marginLeft: 20 }}
-            />
-          </a>
-        </div>
-      </Container>
+          <div className="d-flex align-items-center">
+            {(userRole === "professional" ||
+              userRole === "admin" ||
+              userRole === "client") && (
+              <Link href="/agenda" style={{ textDecoration: "none" }}>
+                <div className={styles.agendaLink}>
+                  <span>MINHA AGENDA</span>
+                </div>
+              </Link>
+            )}
 
-      {/* --- 4. MODAL DE CONFIRMAÇÃO --- */}
-      <Modal
-        isOpen={modalOpen}
-        toggle={() => setModalOpen(false)}
+            <InstallButton />
+
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="profile"
+                className={styles.userProfile}
+                onClick={handleOpenModal}
+                style={{ objectFit: "cover" }}
+              />
+            ) : (
+              <p className={styles.userProfile} onClick={handleOpenModal}>
+                {initials}
+              </p>
+            )}
+          </div>
+
+          {/* DROPDOWN MENU (MANTIDO IGUAL) */}
+          <Modal
+            isOpen={modalOpen}
+            onRequestClose={handleCloseModal}
+            shouldCloseOnEsc={true}
+            className={styles.modal}
+            overlayClassName={styles.overlayModal}
+          >
+            <Link href="/profile">
+              <p className={styles.modalLink}>Meus Dados</p>
+            </Link>
+
+            {/* Alterado para chamar a confirmação */}
+            <p className={styles.modalLink} onClick={handleLogoutClick}>
+              Sair
+            </p>
+          </Modal>
+        </Container>
+      </div>
+
+      {/* NOVO: MODAL DE CONFIRMAÇÃO (BOOTSTRAP) */}
+      <ConfirmModal
+        isOpen={logoutModalOpen}
+        toggle={() => setLogoutModalOpen(false)}
         centered
         size="sm"
       >
-        <ModalHeader toggle={() => setModalOpen(false)} className="text-danger">
+        <ModalHeader
+          toggle={() => setLogoutModalOpen(false)}
+          className="text-danger"
+        >
           Sair do Sistema
         </ModalHeader>
         <ModalBody>Tem certeza que deseja sair da sua conta?</ModalBody>
         <ModalFooter>
-          <Button color="secondary" outline onClick={() => setModalOpen(false)}>
+          <Button
+            color="secondary"
+            outline
+            onClick={() => setLogoutModalOpen(false)}
+          >
             Cancelar
           </Button>
           <Button color="danger" onClick={confirmLogout}>
-            Sair Agora
+            Sair
           </Button>
         </ModalFooter>
-      </Modal>
+      </ConfirmModal>
     </>
   );
 };

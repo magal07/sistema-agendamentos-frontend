@@ -65,7 +65,7 @@ export default function VerifyCertificate() {
             ) : (
               <div className={styles.valid}>
                 <img
-                  src="/episode/iconCheck.svg"
+                  src="/episode/iconCheck.png"
                   alt="Válido"
                   className={styles.checkIcon}
                 />
