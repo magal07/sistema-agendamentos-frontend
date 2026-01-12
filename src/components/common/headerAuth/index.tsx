@@ -1,117 +1,130 @@
 import Link from "next/link";
-import { Container, Form, Input } from "reactstrap";
+import {
+  Container,
+  Form,
+  Input,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+} from "reactstrap"; // <--- Adicione Modal e Button
 import styles from "./styles.module.scss";
-import Modal from "react-modal";
-import { useEffect, useState, type FormEvent } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import profileService from "../../../services/profileService";
-import InstallButton from "../../common/installButton";
-
-Modal.setAppElement("#__next");
 
 const HeaderAuth = function () {
   const router = useRouter();
-  const [modalOpen, setModalOpen] = useState(false);
   const [initials, setInitials] = useState("");
   const [searchName, setSearchName] = useState("");
-  const [userRole, setUserRole] = useState("");
 
-  // 1. NOVO ESTADO PARA A FOTO
-  const [avatarUrl, setAvatarUrl] = useState("");
+  // --- 1. ESTADO DO MODAL ---
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    profileService.fetchCurrent().then((user) => {
+      const firstNameInitial = user.firstName.slice(0, 1);
+      const lastNameInitial = user.lastName.slice(0, 1);
+      setInitials(firstNameInitial + lastNameInitial);
+    });
+  }, []);
 
   const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    router.push(`search?name=${searchName}`);
+    router.push(`/search?name=${searchName}`);
     setSearchName("");
   };
 
   const handleSearchClick = () => {
-    router.push(`search?name=${searchName}`);
+    router.push(`/search?name=${searchName}`);
     setSearchName("");
   };
 
-  useEffect(() => {
-    profileService.fetchCurrent().then((user) => {
-      const role = user.role ? user.role.toLowerCase() : "";
-      const firstNameInitial = user.firstName.slice(0, 1);
-      const lastNameInitial = user.lastName.slice(0, 1);
-      setInitials(firstNameInitial + lastNameInitial);
-      setUserRole(role);
-
-      // 2. PEGAR A FOTO DO BACKEND (SE EXISTIR)
-      if (user.avatarUrl) {
-        setAvatarUrl(`${process.env.NEXT_PUBLIC_BASE_URL}/${user.avatarUrl}`);
-      }
-    });
-  }, []);
-
-  const handleOpenModal = () => {
+  // --- 2. FUNÇÃO QUE ABRE O MODAL ---
+  const handleLogoutClick = (e: any) => {
+    e.preventDefault();
     setModalOpen(true);
   };
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
-  const handleLogout = () => {
+
+  // --- 3. FUNÇÃO QUE SAI DE VERDADE ---
+  const confirmLogout = () => {
     sessionStorage.clear();
     router.push("/");
   };
 
   return (
     <>
-      {/* 1. DIV EXTERNA: Pega a cor de fundo (styles.nav) e ocupa 100% da largura */}
-      <div className={styles.nav}>
-        {/* 2. CONTAINER INTERNO: Centraliza os itens (styles.navContainer) */}
-        <Container className={styles.navContainer}>
-          <Link href="/home">
-            <img src="/logo.png" alt="logo" className={styles.imgLogoNav} />
-          </Link>
-
-          <div className="d-flex align-items-center">
-            {/* LINK MINHA AGENDA */}
-            {(userRole === "professional" ||
-              userRole === "admin" ||
-              userRole === "client") && (
-              <Link href="/agenda" style={{ textDecoration: "none" }}>
-                <div className={styles.agendaLink}>
-                  <span>MINHA AGENDA</span>
-                </div>
-              </Link>
-            )}
-
-            <InstallButton />
-
-            {/* FOTO OU INICIAIS */}
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="profile"
-                className={styles.userProfile}
-                onClick={handleOpenModal}
-                style={{ objectFit: "cover" }}
-              />
-            ) : (
-              <p className={styles.userProfile} onClick={handleOpenModal}>
-                {initials}
-              </p>
-            )}
-          </div>
-
-          <Modal
-            isOpen={modalOpen}
-            onRequestClose={handleCloseModal}
-            shouldCloseOnEsc={true}
-            className={styles.modal}
-            overlayClassName={styles.overlayModal}
+      <Container className={styles.nav}>
+        <Link href="/home">
+          <img
+            src="/logoVerboMAX.svg"
+            alt="logoEspaçoVirtuosa"
+            className={styles.imgLogoNav}
+          />
+        </Link>
+        <div className="d-flex align-items-center">
+          <Form onSubmit={handleSearch}>
+            <Input
+              name="search"
+              type="search"
+              placeholder="Pesquisar"
+              className={styles.input}
+              value={searchName}
+              onChange={(event) => {
+                setSearchName(event.currentTarget.value.toLowerCase());
+              }}
+            />
+          </Form>
+          <img
+            src="/homeAuth/iconSearch.svg"
+            alt="lupaHeader"
+            className={styles.searchImg}
+            onClick={handleSearchClick}
+          />
+          <p
+            className={styles.userProfile}
+            onClick={() => router.push("/profile")}
           >
-            <Link href="/profile">
-              <p className={styles.modalLink}>Meus Dados</p>
-            </Link>
-            <p className={styles.modalLink} onClick={handleLogout}>
-              Sair
-            </p>
-          </Modal>
-        </Container>
-      </div>
+            {initials}
+          </p>
+
+          {/* Botão Sair (ícone ou texto) - Adicionei um link simples aqui caso não tenha */}
+          <a
+            href="#"
+            onClick={handleLogoutClick}
+            className={styles.logoutLink}
+            title="Sair"
+          >
+            <img
+              src="/profile/iconUserAccount.svg"
+              alt="sair"
+              style={{ width: 20, marginLeft: 20 }}
+            />
+          </a>
+        </div>
+      </Container>
+
+      {/* --- 4. MODAL DE CONFIRMAÇÃO --- */}
+      <Modal
+        isOpen={modalOpen}
+        toggle={() => setModalOpen(false)}
+        centered
+        size="sm"
+      >
+        <ModalHeader toggle={() => setModalOpen(false)} className="text-danger">
+          Sair do Sistema
+        </ModalHeader>
+        <ModalBody>Tem certeza que deseja sair da sua conta?</ModalBody>
+        <ModalFooter>
+          <Button color="secondary" outline onClick={() => setModalOpen(false)}>
+            Cancelar
+          </Button>
+          <Button color="danger" onClick={confirmLogout}>
+            Sair Agora
+          </Button>
+        </ModalFooter>
+      </Modal>
     </>
   );
 };

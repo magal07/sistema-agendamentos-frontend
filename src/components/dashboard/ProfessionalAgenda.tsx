@@ -1,4 +1,3 @@
-// src/components/dashboard/ProfessionalAgenda.tsx
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -13,32 +12,37 @@ import {
 import { format, parseISO } from "date-fns";
 import api from "../../services/api";
 import { appointmentService } from "../../services/appointmentService";
-import ToastComponent from "../common/toast";
 
 export default function ProfessionalAgenda() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Modais e Seleção
+  // Modais de Ação
   const [modalComplete, setModalComplete] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
 
-  // Estados para o Modal de Conclusão
+  // Estados para Conclusão
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
-  // Estado do Toast (Igual ao book.tsx)
-  const [toastIsOpen, setToastIsOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<"success" | "error" | "warning">(
-    "success"
-  );
+  // --- 1. ESTADO DO MODAL GLOBAL (Substituindo o Toast simples para alertas maiores) ---
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "alert" as "alert" | "confirm" | "success" | "warning",
+    confirmAction: null as null | (() => Promise<void>),
+  });
 
-  const showToast = (type: "success" | "error" | "warning", msg: string) => {
-    setToastType(type);
-    setToastMessage(msg);
-    setToastIsOpen(true);
-    setTimeout(() => setToastIsOpen(false), 3000);
+  const closeModal = () => setModal({ ...modal, isOpen: false });
+
+  // Helper para abrir o modal de alerta/sucesso
+  const showAlert = (
+    type: "success" | "warning" | "alert",
+    title: string,
+    msg: string
+  ) => {
+    setModal({ isOpen: true, type, title, message: msg, confirmAction: null });
   };
 
   useEffect(() => {
@@ -48,7 +52,6 @@ export default function ProfessionalAgenda() {
   const loadAgenda = async () => {
     setLoading(true);
     try {
-      // Usa api direta ou appointmentService.getAll se tiver suporte a sem params
       const res = await api.get("/appointments");
       setAppointments(res.data);
     } catch (error) {
@@ -58,50 +61,61 @@ export default function ProfessionalAgenda() {
     }
   };
 
-  // --- AÇÃO: CANCELAR ---
-  const handleCancel = async (id: number) => {
-    if (!confirm("Tem certeza que deseja cancelar?")) return;
-
+  // --- 2. LÓGICA DE CANCELAMENTO (Professional) ---
+  const executeCancel = async (id: number) => {
     try {
-      // Chama o serviço de delete via API direta para pegar o retorno customizado
       const res = await api.delete(`/appointments/${id}`);
 
-      // Verifica se o backend devolveu o alerta de "Cancelamento Tardio"
+      // Verifica Warning
       if (res.data && res.data.type === "warning") {
-        showToast("warning", res.data.message);
+        showAlert("warning", "Aviso", res.data.message);
       } else {
-        showToast("success", "Agendamento cancelado!");
+        showAlert("success", "Sucesso", "Agendamento cancelado!");
         loadAgenda();
       }
     } catch (error: any) {
-      showToast("error", error.response?.data?.message || "Erro ao cancelar");
+      showAlert(
+        "alert",
+        "Erro",
+        error.response?.data?.message || "Erro ao cancelar"
+      );
     }
   };
 
-  // --- AÇÃO: PREPARAR CONCLUSÃO ---
+  const handleCancelClick = (id: number) => {
+    setModal({
+      isOpen: true,
+      title: "Cancelar Agendamento",
+      message: "Tem certeza que deseja cancelar este agendamento?",
+      type: "confirm",
+      confirmAction: () => executeCancel(id),
+    });
+  };
+
+  // --- LÓGICA DE CONCLUSÃO ---
   const openCompleteModal = (appt: any) => {
     setSelectedAppt(appt);
-    // Preenche inputs com data/hora original
     const dt = parseISO(appt.appointmentDate);
     setNewDate(format(dt, "yyyy-MM-dd"));
     setNewTime(format(dt, "HH:mm"));
     setModalComplete(true);
   };
 
-  // --- AÇÃO: CONFIRMAR CONCLUSÃO ---
   const handleComplete = async () => {
     if (!selectedAppt) return;
-
     try {
       const finalDate = parseISO(`${newDate}T${newTime}:00`);
-
       await appointmentService.complete(selectedAppt.id, finalDate);
 
-      showToast("success", "Serviço finalizado! Comissão gerada. 💰");
       setModalComplete(false);
+      showAlert(
+        "success",
+        "Serviço Realizado",
+        "Comissão gerada com sucesso! 💰"
+      );
       loadAgenda();
     } catch (error: any) {
-      showToast("error", "Erro ao finalizar.");
+      showAlert("alert", "Erro", "Erro ao finalizar serviço.");
     }
   };
 
@@ -163,16 +177,15 @@ export default function ProfessionalAgenda() {
                             color="success"
                             className="me-1"
                             onClick={() => openCompleteModal(appt)}
-                            title="Finalizar Serviço"
+                            title="Finalizar"
                           >
                             ✅
                           </Button>
-
                           <Button
                             size="sm"
                             color="danger"
-                            onClick={() => handleCancel(appt.id)}
-                            title="Cancelar Agendamento"
+                            onClick={() => handleCancelClick(appt.id)}
+                            title="Cancelar"
                           >
                             🗑️
                           </Button>
@@ -186,7 +199,7 @@ export default function ProfessionalAgenda() {
         </div>
       )}
 
-      {/* MODAL DE CONCLUSÃO */}
+      {/* MODAL DE CONCLUSÃO (ESPECÍFICO DESTA TELA) */}
       <Modal
         isOpen={modalComplete}
         toggle={() => setModalComplete(!modalComplete)}
@@ -194,10 +207,6 @@ export default function ProfessionalAgenda() {
         <ModalHeader>Finalizar Serviço</ModalHeader>
         <ModalBody>
           <p>O serviço foi realizado no horário agendado?</p>
-          <p className="small text-muted">
-            Se houve atraso ou adiantamento, ajuste abaixo para o relatório
-            ficar correto.
-          </p>
           <div className="d-flex gap-2">
             <Input
               type="date"
@@ -216,16 +225,48 @@ export default function ProfessionalAgenda() {
             Cancelar
           </Button>
           <Button color="success" onClick={handleComplete}>
-            Confirmar Finalização
+            Confirmar
           </Button>
         </ModalFooter>
       </Modal>
 
-      <ToastComponent
-        isOpen={toastIsOpen}
-        message={toastMessage}
-        type={toastType}
-      />
+      {/* 3. MODAL GLOBAL DE AVISOS/CONFIRMAÇÃO */}
+      <Modal isOpen={modal.isOpen} toggle={closeModal} centered>
+        <ModalHeader
+          toggle={closeModal}
+          className={
+            modal.type === "success"
+              ? "text-success"
+              : modal.type === "warning"
+              ? "text-warning"
+              : modal.type === "confirm"
+              ? "text-danger"
+              : ""
+          }
+        >
+          {modal.title}
+        </ModalHeader>
+        <ModalBody>{modal.message}</ModalBody>
+        <ModalFooter>
+          {modal.type === "confirm" ? (
+            <>
+              <Button color="secondary" outline onClick={closeModal}>
+                Voltar
+              </Button>
+              <Button
+                color="danger"
+                onClick={() => modal.confirmAction && modal.confirmAction()}
+              >
+                Confirmar
+              </Button>
+            </>
+          ) : (
+            <Button color="primary" onClick={closeModal}>
+              Ok
+            </Button>
+          )}
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }

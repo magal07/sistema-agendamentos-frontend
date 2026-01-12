@@ -15,6 +15,14 @@
   z-index: 9999;
   padding-bottom: env(safe-area-inset-bottom);
 
+  .logoutItem {
+    color: #e74c3c !important; // Vermelho para o botão sair
+
+    .icon {
+      color: #e74c3c !important;
+    }
+  }
+
   // Ajuste de altura para telas muito pequenas para ganhar espaço vertical
   @media (max-width: 360px) {
     height: 60px;

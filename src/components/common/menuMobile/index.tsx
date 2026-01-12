@@ -1,10 +1,10 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "reactstrap"; // <--- Import do Modal
 import profileService from "../../../services/profileService";
 import styles from "./styles.module.scss";
 
-// Ícones (Estou usando react-icons/fi - Feather Icons, que são clean)
-// Instale: npm install react-icons
+// Ícones (Feather Icons)
 import {
   FiHome,
   FiCalendar,
@@ -13,6 +13,7 @@ import {
   FiSearch,
   FiList,
   FiClock,
+  FiLogOut, // <--- Adicionei o ícone de sair
 } from "react-icons/fi";
 
 // Definição do tipo do item de menu
@@ -27,8 +28,10 @@ const MenuMobile = () => {
   const [role, setRole] = useState<string>("");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
+  // --- ESTADO DO MODAL DE SAIR ---
+  const [modalOpen, setModalOpen] = useState(false);
+
   useEffect(() => {
-    // Busca o usuário para saber o cargo
     profileService
       .fetchCurrent()
       .then((user) => {
@@ -36,7 +39,6 @@ const MenuMobile = () => {
         defineMenu(user.role);
       })
       .catch(() => {
-        // Se não estiver logado, define menu público ou redireciona
         setRole("visitor");
       });
   }, []);
@@ -52,8 +54,8 @@ const MenuMobile = () => {
           label: "Financeiro",
           icon: <FiPieChart />,
           path: "/reports/financial",
-        }, // Acesso rápido ao relatório
-        { label: "Agenda", icon: <FiCalendar />, path: "/agenda" }, // Ver a agenda geral
+        },
+        { label: "Agenda", icon: <FiCalendar />, path: "/agenda" },
         { label: "Perfil", icon: <FiUser />, path: "/profile" },
       ];
     }
@@ -62,8 +64,8 @@ const MenuMobile = () => {
     else if (userRole === "professional") {
       items = [
         { label: "Início", icon: <FiHome />, path: "/home" },
-        { label: "Agenda", icon: <FiCalendar />, path: "/agenda" }, // Foco na agenda dele
-        { label: "Horários", icon: <FiClock />, path: "/availability" }, // Configurar disponibilidade
+        { label: "Agenda", icon: <FiCalendar />, path: "/agenda" },
+        { label: "Horários", icon: <FiClock />, path: "/availability" },
         { label: "Perfil", icon: <FiUser />, path: "/profile" },
       ];
     }
@@ -71,35 +73,78 @@ const MenuMobile = () => {
     // --- 3. CLIENTE (PADRÃO) ---
     else {
       items = [
-        { label: "Explorar", icon: <FiSearch />, path: "/home" }, // Cliente busca serviços
-        { label: "Meus Agend.", icon: <FiList />, path: "/appointments/me" }, // Histórico (precisa criar essa rota se não tiver)
+        { label: "Explorar", icon: <FiSearch />, path: "/home" },
+        { label: "Meus Agend.", icon: <FiList />, path: "/appointments/me" },
         { label: "Perfil", icon: <FiUser />, path: "/profile" },
       ];
     }
 
+    // Adiciona o botão SAIR ao final de todos os menus
+    items.push({ label: "Sair", icon: <FiLogOut />, path: "logout" });
+
     setMenuItems(items);
   };
 
-  // Função para checar se o link está ativo (visual vermelho/rosa)
+  // --- FUNÇÃO DE NAVEGAÇÃO / LOGOUT ---
+  const handleNavigation = (path: string) => {
+    if (path === "logout") {
+      setModalOpen(true); // Abre o modal em vez de navegar
+    } else {
+      router.push(path);
+    }
+  };
+
+  // --- FUNÇÃO QUE EXECUTA O LOGOUT ---
+  const confirmLogout = () => {
+    sessionStorage.clear();
+    router.push("/");
+  };
+
+  // Função visual para link ativo
   const isActive = (path: string) => {
+    if (path === "logout") return styles.logoutItem; // Estilo especial pro sair
     return router.pathname === path ? styles.active : "";
   };
 
-  if (!role) return null; // Não mostra nada enquanto carrega
+  if (!role) return null;
 
   return (
-    <div className={styles.mobileNav}>
-      {menuItems.map((item, index) => (
-        <div
-          key={index}
-          className={`${styles.navItem} ${isActive(item.path)}`}
-          onClick={() => router.push(item.path)}
-        >
-          <span className={styles.icon}>{item.icon}</span>
-          <span>{item.label}</span>
-        </div>
-      ))}
-    </div>
+    <>
+      <div className={styles.mobileNav}>
+        {menuItems.map((item, index) => (
+          <div
+            key={index}
+            className={`${styles.navItem} ${isActive(item.path)}`}
+            onClick={() => handleNavigation(item.path)}
+          >
+            <span className={styles.icon}>{item.icon}</span>
+            <span className={styles.label}>{item.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* --- MODAL DE CONFIRMAÇÃO --- */}
+      <Modal
+        isOpen={modalOpen}
+        toggle={() => setModalOpen(false)}
+        centered
+        size="sm"
+        style={{ zIndex: 10000 }}
+      >
+        <ModalHeader toggle={() => setModalOpen(false)} className="text-danger">
+          Deseja sair? 🚪
+        </ModalHeader>
+        <ModalBody>Você será desconectado do sistema.</ModalBody>
+        <ModalFooter>
+          <Button color="secondary" outline onClick={() => setModalOpen(false)}>
+            Voltar
+          </Button>
+          <Button color="danger" onClick={confirmLogout}>
+            Sim, Sair
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </>
   );
 };
 
