@@ -306,6 +306,28 @@ $radius: 16px;
   }
 }
 
+// Título das seções (ex: "Seus Próximos Agendamentos")
+.appointmentsTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: $text-main;
+  letter-spacing: -0.5px;
+  margin-bottom: 20px !important; // Garante espaçamento
+  position: relative;
+  display: inline-block;
+
+  // Detalhe visual opcional: sublinhado curto
+  &::after {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 3px;
+    background: $primary; // Pink Rose
+    border-radius: 2px;
+    margin-top: 8px;
+  }
+}
+
 // --- LISTA DE CARDS ---
 .listContainer {
   display: flex;
