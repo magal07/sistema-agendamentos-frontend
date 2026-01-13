@@ -47,3 +47,11 @@ export const validateCPF = (cpf: string): boolean => {
 
   return true;
 };
+
+export const formatData = (value: string) => {
+  return value
+    .replace(/\D/g, "") // Remove tudo que não é número
+    .replace(/(\d{2})(\d)/, "$1/$2") // Coloca a barra após o dia
+    .replace(/(\d{2})(\d)/, "$1/$2") // Coloca a barra após o mês
+    .replace(/(\d{4})(\d)/, "$1"); // Limita a 8 dígitos (DD/MM/AAAA)
+};
