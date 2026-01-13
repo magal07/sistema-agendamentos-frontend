@@ -10,6 +10,10 @@ import {
   Row,
   Col,
   Spinner,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "reactstrap";
 import HeaderAuth from "../src/components/common/headerAuth";
 import styles from "../styles/agenda.module.scss";
@@ -34,6 +38,12 @@ export default function AvailabilityPage() {
   // O segredo está aqui: começamos carregando e só paramos se for autorizado
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalTitle, setModalTitle] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+
   const [schedule, setSchedule] = useState<
     {
       dayOfWeek: number;
@@ -107,12 +117,28 @@ export default function AvailabilityPage() {
         }));
 
       await availabilityService.saveAvailability(toSave);
-      alert("Horários salvos com sucesso!");
-      router.push("/agenda");
+
+      // SUCESSO
+      setModalTitle("Sucesso!");
+      setModalMessage("Horários salvos com sucesso!");
+      setIsSuccess(true);
+      setModalOpen(true);
     } catch (error) {
-      alert("Erro ao salvar.");
+      // ERRO
+      setModalTitle("Erro");
+      setModalMessage("Erro ao salvar as configurações.");
+      setIsSuccess(false);
+      setModalOpen(true);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Função para fechar o modal e redirecionar se for sucesso
+  const toggleModal = () => {
+    setModalOpen(!modalOpen);
+    if (isSuccess) {
+      router.push("/agenda");
     }
   };
 
@@ -237,6 +263,24 @@ export default function AvailabilityPage() {
             </Form>
           </div>
         </Container>
+
+        <Modal isOpen={modalOpen} toggle={toggleModal} centered>
+          <ModalHeader
+            toggle={toggleModal}
+            className={
+              isSuccess ? "bg-success text-white" : "bg-danger text-white"
+            }
+          >
+            {modalTitle}
+          </ModalHeader>
+          <ModalBody>{modalMessage}</ModalBody>
+          <ModalFooter>
+            <Button color="secondary" onClick={toggleModal}>
+              OK
+            </Button>
+          </ModalFooter>
+        </Modal>
+
         <MenuMobile />
       </main>
     </>
