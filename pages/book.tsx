@@ -14,6 +14,10 @@ import {
   CardSubtitle,
   Row,
   Col,
+  Modal, // <--- NOVO
+  ModalHeader, // <--- NOVO
+  ModalBody, // <--- NOVO
+  ModalFooter, // <--- NOVO
 } from "reactstrap";
 import HeaderAuth from "../src/components/common/headerAuth";
 import Footer from "../src/components/common/footer";
@@ -23,7 +27,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
-import { parseISO } from "date-fns";
+import { parseISO, format } from "date-fns";
 import { appointmentService } from "../src/services/appointmentService";
 import { professionalService } from "../src/services/professionalService";
 import availabilityService from "../src/services/availabilityService";
@@ -47,6 +51,7 @@ export default function Book() {
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+
   const [availability, setAvailability] = useState<any[]>([]);
   const [availableSlots, setAvailableSlots] = useState<Date[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -54,23 +59,31 @@ export default function Book() {
   const [selectedProf, setSelectedProf] = useState("");
   const [selectedCat, setSelectedCat] = useState("");
   const [selectedService, setSelectedService] = useState("");
+
   const [startDate, setStartDate] = useState(new Date());
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
+
+  // --- MODAL STATES (IGUAL AO PROFISSIONAL) ---
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [modalStatus, setModalStatus] = useState<
+    "review" | "success" | "error"
+  >("review");
+  const [modalFeedbackMsg, setModalFeedbackMsg] = useState("");
+  const [executing, setExecuting] = useState(false);
 
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
 
-  // HELPER IMAGEM
   const getImageUrl = (path: string) => {
     if (!path) return "/placeholder.png";
     const cleanPath = path.replace(/\\/g, "/");
-    const finalPath = cleanPath.startsWith("/")
-      ? cleanPath.substring(1)
-      : cleanPath;
-    return `${process.env.NEXT_PUBLIC_BASE_URL}/${finalPath}`;
+    return `${process.env.NEXT_PUBLIC_BASE_URL}/${
+      cleanPath.startsWith("/") ? cleanPath.substring(1) : cleanPath
+    }`;
   };
 
-  // LOGICA (Mantida)
+  // --- EFEITOS DE CARREGAMENTO (Cidades, Empresas, Profissionais...) ---
   useEffect(() => {
     const loadCities = async () => {
       try {
@@ -156,6 +169,7 @@ export default function Book() {
     setSelectedService("");
     setServices([]);
     setAvailableSlots([]);
+    setSelectedTimeSlot(null);
   }, [selectedProf, professionals]);
 
   useEffect(() => {
@@ -171,10 +185,15 @@ export default function Book() {
       setServices([]);
     }
     setSelectedService("");
+    setSelectedTimeSlot(null);
   }, [selectedCat, selectedProf, professionals]);
 
+  // --- BUSCA SLOT DE HORÁRIOS ---
   useEffect(() => {
     const fetchSlots = async () => {
+      setAvailableSlots([]);
+      setSelectedTimeSlot(null);
+
       if (selectedProf && selectedService && startDate) {
         setLoadingSlots(true);
         try {
@@ -209,22 +228,47 @@ export default function Book() {
     setTimeout(() => setToastIsOpen(false), 3000);
   };
 
-  const handleBook = async () => {
-    if (!selectedProf || !selectedService || !startDate) {
+  // --- ABERTURA DO MODAL ---
+  const handleOpenConfirm = () => {
+    if (!selectedProf || !selectedService || !selectedTimeSlot) {
       showToast("error", "Preencha todos os campos.");
       return;
     }
+    setModalStatus("review");
+    setConfirmModalOpen(true);
+  };
+
+  // --- EXECUÇÃO DO AGENDAMENTO ---
+  const executeSchedule = async () => {
+    setExecuting(true);
     try {
       await appointmentService.create(
         Number(selectedProf),
         Number(selectedService),
-        startDate
+        selectedTimeSlot!
       );
-      showToast("success", "Agendamento realizado!");
-      setTimeout(() => router.push("/home"), 2000);
+      setModalStatus("success");
     } catch (err: any) {
-      showToast("error", err.response?.data?.message || "Erro ao agendar.");
+      setModalStatus("error");
+      setModalFeedbackMsg(err.response?.data?.message || "Erro ao agendar.");
+    } finally {
+      setExecuting(false);
     }
+  };
+
+  const handleCloseSuccess = () => {
+    setConfirmModalOpen(false);
+    router.push("/agenda"); // Vai para a página 'Meus Agendamentos'
+  };
+
+  // Helpers para exibir nomes no modal
+  const getProfName = () => {
+    const p = professionals.find((x) => x.id.toString() === selectedProf);
+    return p ? `${p.firstName} ${p.lastName}` : "";
+  };
+  const getServiceName = () => {
+    const s = services.find((x) => x.id.toString() === selectedService);
+    return s ? s.name : "";
   };
 
   return (
@@ -246,8 +290,6 @@ export default function Book() {
                 {step === 2 && `Unidades em ${selectedCity}`}
                 {step === 3 && selectedCompany && selectedCompany.name}
               </p>
-
-              {/* STEPPER */}
               <div className={styles.stepper}>
                 <div
                   className={`${styles.step} ${step >= 1 ? styles.active : ""}`}
@@ -307,7 +349,6 @@ export default function Book() {
           {/* ETAPA 2: EMPRESAS */}
           {step === 2 && (
             <div className={styles.fadeIn}>
-              {/* BARRA DE CONTROLE FLUTUANTE (Resolve o problema do botão cortado) */}
               <div className={styles.controlBar}>
                 <Button
                   color="link"
@@ -320,36 +361,28 @@ export default function Book() {
                   {companies.length} Unidades encontradas
                 </span>
               </div>
-
               {loading ? (
                 <div className="text-center py-5">
                   <Spinner color="dark" />
                 </div>
               ) : (
                 <Row className="g-3">
-                  {" "}
-                  {/* g-3 ajusta o espaçamento entre colunas */}
                   {companies.map((company) => (
-                    // AQUI ESTÁ A MÁGICA: xs={6} coloca 2 cards por linha no celular
                     <Col xs={6} sm={6} md={3} key={company.id}>
                       <Card
                         className={styles.companyCard}
                         onClick={() => handleCompanySelect(company)}
                       >
                         <div className={styles.cardImageWrapper}>
-                          {company.thumbnailUrl ? (
-                            <img
-                              src={getImageUrl(company.thumbnailUrl)}
-                              alt={company.name}
-                              className={styles.cardImage}
-                              onError={(e) => {
-                                e.currentTarget.src =
-                                  "https://via.placeholder.com/300x400?text=Virtuosa";
-                              }}
-                            />
-                          ) : (
-                            <div className={styles.noImage}>Virtuosa</div>
-                          )}
+                          <img
+                            src={getImageUrl(company.thumbnailUrl)}
+                            alt={company.name}
+                            className={styles.cardImage}
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://via.placeholder.com/300x400?text=Virtuosa";
+                            }}
+                          />
                         </div>
                         <CardBody
                           className={`${styles.cardBodyCompact} text-center`}
@@ -360,7 +393,6 @@ export default function Book() {
                           <CardSubtitle className={styles.cardSubtitle}>
                             {company.district}
                           </CardSubtitle>
-                          {/* Botão menor e mais compacto para mobile */}
                           <Button className={styles.btnOutlineCompact}>
                             Ver Agenda
                           </Button>
@@ -370,7 +402,7 @@ export default function Book() {
                   ))}
                   {companies.length === 0 && (
                     <div className="text-center text-muted py-5 col-12">
-                      <p>Nenhuma unidade encontrada nesta cidade.</p>
+                      <p>Nenhuma unidade encontrada.</p>
                     </div>
                   )}
                 </Row>
@@ -394,7 +426,9 @@ export default function Book() {
                     &larr; Voltar
                   </Button>
 
-                  <h3 className={styles.sectionTitle}>Detalhes</h3>
+                  <h3 className={styles.sectionTitle}>
+                    Detalhes do Agendamento
+                  </h3>
 
                   {loading ? (
                     <div className="text-center py-5">
@@ -465,20 +499,14 @@ export default function Book() {
                       </FormGroup>
 
                       <FormGroup>
-                        <Label className={styles.labelElegant}>
-                          Data e Hora
-                        </Label>
+                        <Label className={styles.labelElegant}>Data</Label>
                         <div className={styles.datePickerContainer}>
                           <DatePicker
                             selected={startDate}
                             onChange={(date: Date | null) => {
                               if (date) setStartDate(date);
                             }}
-                            showTimeSelect
-                            includeTimes={availableSlots}
-                            timeCaption="Horas"
-                            timeIntervals={30}
-                            dateFormat="dd/MM/yyyy - HH:mm"
+                            dateFormat="dd/MM/yyyy"
                             locale="pt-BR"
                             className={styles.elegantInput}
                             minDate={new Date()}
@@ -486,36 +514,85 @@ export default function Book() {
                             disabled={!selectedService}
                             placeholderText={
                               !selectedService
-                                ? "Selecione o serviço"
-                                : "Escolha a data"
+                                ? "Selecione o serviço primeiro"
+                                : "Escolha o dia"
                             }
                           />
                         </div>
-                        {loadingSlots && (
-                          <small className="text-muted d-block mt-1">
-                            Buscando horários...
-                          </small>
-                        )}
-                        {selectedService &&
-                          !loadingSlots &&
-                          availableSlots.length === 0 && (
-                            <small className="text-warning mt-2 d-block">
-                              Sem horários para hoje.
-                            </small>
-                          )}
                       </FormGroup>
 
-                      <div className="text-center mt-4">
+                      {selectedService && (
+                        <div className="mt-4">
+                          <Label className={styles.labelElegant}>
+                            Horários Disponíveis
+                          </Label>
+                          {loadingSlots && (
+                            <div className="py-2">
+                              <Spinner size="sm" color="secondary" /> Buscando
+                              horários...
+                            </div>
+                          )}
+                          {!loadingSlots && availableSlots.length === 0 && (
+                            <p className="text-muted small">
+                              Nenhum horário disponível para esta data.
+                            </p>
+                          )}
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "repeat(auto-fill, minmax(80px, 1fr))",
+                              gap: "10px",
+                              marginTop: "10px",
+                            }}
+                          >
+                            {availableSlots.map((slotDate, index) => {
+                              const isSelected =
+                                selectedTimeSlot &&
+                                slotDate.getTime() ===
+                                  selectedTimeSlot.getTime();
+                              return (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => setSelectedTimeSlot(slotDate)}
+                                  style={{
+                                    padding: "10px",
+                                    borderRadius: "8px",
+                                    border: isSelected
+                                      ? "2px solid #D4AF37"
+                                      : "1px solid #ddd",
+                                    backgroundColor: isSelected
+                                      ? "#fff8e1"
+                                      : "#fff",
+                                    color: isSelected ? "#333" : "#666",
+                                    fontWeight: isSelected ? "bold" : "normal",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                  }}
+                                >
+                                  {/* CORREÇÃO DO ERRO 2026: Exibir apenas a HORA formatada */}
+                                  {format(slotDate, "HH:mm")}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="text-center mt-5">
                         <Button
                           className={styles.btnGold}
-                          onClick={handleBook}
+                          onClick={handleOpenConfirm}
                           disabled={
                             !selectedProf ||
                             !selectedService ||
-                            availableSlots.length === 0
+                            !selectedTimeSlot
                           }
+                          style={{ minWidth: "200px", padding: "12px" }}
                         >
-                          Agendar
+                          Confirmar Agendamento
                         </Button>
                       </div>
                     </Form>
@@ -532,8 +609,133 @@ export default function Book() {
           isOpen={toastIsOpen}
           message={toastMessage}
         />
-
         <MenuMobile />
+
+        {/* --- MODAL DE CONFIRMAÇÃO --- */}
+        <Modal
+          isOpen={confirmModalOpen}
+          toggle={() =>
+            modalStatus === "success"
+              ? handleCloseSuccess()
+              : setConfirmModalOpen(false)
+          }
+          centered
+          backdrop="static"
+        >
+          <ModalHeader
+            toggle={() =>
+              modalStatus === "success"
+                ? handleCloseSuccess()
+                : setConfirmModalOpen(false)
+            }
+            className="text-center"
+            style={{ borderBottom: "none" }}
+          >
+            {modalStatus === "review" && "Confirmar Agendamento 📅"}
+            {modalStatus === "success" && (
+              <span className="text-success">Sucesso! 🎉</span>
+            )}
+            {modalStatus === "error" && (
+              <span className="text-danger">Atenção ⚠️</span>
+            )}
+          </ModalHeader>
+          <ModalBody>
+            {modalStatus === "review" && (
+              <div className="text-center py-2">
+                <p className="text-muted mb-4">
+                  Confira os dados antes de finalizar:
+                </p>
+                <div
+                  style={{
+                    background: "#f9f9f9",
+                    padding: "15px",
+                    borderRadius: "10px",
+                    textAlign: "left",
+                  }}
+                >
+                  <p className="mb-2">
+                    💇‍♀️ <strong>Profissional:</strong> {getProfName()}
+                  </p>
+                  <p className="mb-2">
+                    💅 <strong>Serviço:</strong> {getServiceName()}
+                  </p>
+                  <hr style={{ borderColor: "#eaeaea" }} />
+                  <p
+                    className="mb-0 text-center"
+                    style={{
+                      fontSize: "1.2rem",
+                      color: "#d48498",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {/* Exibe: 13/01/2026 às 16:30 */}
+                    {selectedTimeSlot &&
+                      format(selectedTimeSlot, "dd/MM/yyyy 'às' HH:mm")}
+                  </p>
+                </div>
+              </div>
+            )}
+            {modalStatus === "success" && (
+              <div className="text-center py-4">
+                <div style={{ fontSize: "3rem", marginBottom: "15px" }}>✅</div>
+                <h4 style={{ fontWeight: "bold", color: "#28a745" }}>
+                  Agendado com Sucesso!
+                </h4>
+                <p className="text-muted">
+                  Seu horário foi reservado. Te esperamos lá!
+                </p>
+              </div>
+            )}
+            {modalStatus === "error" && (
+              <div className="text-center py-4">
+                <div style={{ fontSize: "3rem", marginBottom: "15px" }}>❌</div>
+                <h4 style={{ fontWeight: "bold", color: "#dc3545" }}>
+                  Erro ao Agendar
+                </h4>
+                <p className="text-muted">{modalFeedbackMsg}</p>
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter className="justify-content-center border-0 pb-4">
+            {modalStatus === "review" && (
+              <>
+                <Button
+                  color="secondary"
+                  outline
+                  onClick={() => setConfirmModalOpen(false)}
+                  style={{ minWidth: "100px" }}
+                >
+                  Voltar
+                </Button>
+                <Button
+                  color="success"
+                  onClick={executeSchedule}
+                  style={{ minWidth: "140px", fontWeight: "bold" }}
+                >
+                  {executing ? <Spinner size="sm" /> : "CONFIRMAR"}
+                </Button>
+              </>
+            )}
+            {modalStatus === "success" && (
+              <Button
+                color="primary"
+                onClick={handleCloseSuccess}
+                style={{ minWidth: "150px", borderRadius: "25px" }}
+              >
+                Ver Meus Agendamentos
+              </Button>
+            )}
+            {modalStatus === "error" && (
+              <Button
+                color="secondary"
+                onClick={() => setModalStatus("review")}
+                style={{ minWidth: "120px" }}
+              >
+                Tentar Novamente
+              </Button>
+            )}
+          </ModalFooter>
+        </Modal>
       </main>
     </>
   );

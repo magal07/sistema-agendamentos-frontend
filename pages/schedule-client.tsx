@@ -21,13 +21,14 @@ import MenuMobile from "../src/components/common/menuMobile";
 import styles from "../styles/scheduleClient.module.scss";
 
 import { formatCPF } from "../utils/masks";
-// --- NOVO: Importando nosso DateConfig ---
+// --- DATE FNS (Importante para formatar o horário corretamente) ---
+import { format, parseISO } from "date-fns";
 import {
   getTodayISO,
   getTomorrowISO,
   formatDateDisplay,
   combineDateAndTime,
-  extractTimeHHMM,
+  // extractTimeHHMM, // Não vamos mais usar esse, faremos direto com date-fns
 } from "../utils/dateConfig";
 
 import profileService from "../src/services/profileService";
@@ -59,14 +60,13 @@ export default function ScheduleClient() {
 
   // --- CONTROLE DO MODAL ---
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  // Estados internos do modal: 'review' (revisão), 'success' (sucesso), 'error' (erro)
   const [modalStatus, setModalStatus] = useState<
     "review" | "success" | "error"
   >("review");
   const [modalFeedbackMsg, setModalFeedbackMsg] = useState("");
 
   useEffect(() => {
-    // Inicializa com a data de hoje usando nosso helper
+    // Inicializa com a data de hoje
     setSelectedDate(getTodayISO());
 
     professionalService.getAll().then(setProfessionals).catch(console.error);
@@ -86,7 +86,7 @@ export default function ScheduleClient() {
       .catch(console.error);
   }, []);
 
-  // Busca e formata horários usando helper
+  // --- CORREÇÃO DO HORÁRIO (Remove o "2026-...") ---
   const fetchAndFormatSlots = async (
     dateStr: string,
     profId: number,
@@ -101,7 +101,14 @@ export default function ScheduleClient() {
       srvId,
       dateObj
     );
-    return slots.map(extractTimeHHMM);
+
+    // Transforma "2026-01-13T16:30:00" em "16:30"
+    return slots.map((slot: string) => {
+      if (slot.includes("T")) {
+        return format(parseISO(slot), "HH:mm");
+      }
+      return slot.substring(0, 5);
+    });
   };
 
   const handleSearchCpf = async () => {
@@ -197,6 +204,7 @@ export default function ScheduleClient() {
   const executeSchedule = async () => {
     setLoading(true);
     try {
+      // Como selectedTime agora é limpo ("16:30"), o combineDateAndTime funciona perfeitamente
       const fullDate = combineDateAndTime(selectedDate, selectedTime);
 
       await appointmentService.create(
