@@ -7,13 +7,14 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  Input, // Importado Input
 } from "reactstrap";
 import { useRouter } from "next/router";
 import HeaderAuth from "../src/components/common/headerAuth";
 import Footer from "../src/components/common/footer";
 import { appointmentService } from "../src/services/appointmentService";
 import profileService from "../src/services/profileService";
-import { format, isAfter, getHours } from "date-fns";
+import { format, isAfter, getHours, parseISO } from "date-fns"; // Importado parseISO
 import { ptBR } from "date-fns/locale";
 import styles from "../styles/homeAuth.module.scss";
 import MenuMobile from "../src/components/common/menuMobile";
@@ -47,7 +48,7 @@ export default function HomeAuth() {
     "upcoming"
   );
 
-  // --- ESTADOS DO MODAL ---
+  // --- ESTADOS DO MODAL GLOBAL ---
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -57,6 +58,12 @@ export default function HomeAuth() {
   });
 
   const closeModal = () => setModal({ ...modal, isOpen: false });
+
+  // --- ESTADOS PARA FINALIZAR SERVIÇO (Copiado de ProfessionalAgenda) ---
+  const [modalComplete, setModalComplete] = useState(false);
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
 
   // --- SAUDAÇÃO ---
   const greeting = useMemo(() => {
@@ -130,6 +137,46 @@ export default function HomeAuth() {
       type: "confirm",
       confirmAction: () => executeCancellation(id),
     });
+  };
+
+  // --- FUNÇÕES DE FINALIZAR SERVIÇO (Adicionadas) ---
+  const openCompleteModal = (appt: Appointment) => {
+    setSelectedAppt(appt);
+    // Verifica se appointmentDate é string ou Date e converte para Date se necessário para usar com format
+    const dt =
+      typeof appt.appointmentDate === "string"
+        ? parseISO(appt.appointmentDate)
+        : appt.appointmentDate;
+
+    setNewDate(format(dt, "yyyy-MM-dd"));
+    setNewTime(format(dt, "HH:mm"));
+    setModalComplete(true);
+  };
+
+  const handleComplete = async () => {
+    if (!selectedAppt) return;
+    try {
+      const finalDate = parseISO(`${newDate}T${newTime}:00`);
+      await appointmentService.complete(selectedAppt.id, finalDate);
+
+      setModalComplete(false);
+      setModal({
+        isOpen: true,
+        title: "✅ Serviço Realizado",
+        message: "Comissão gerada com sucesso! 💰",
+        type: "success",
+        confirmAction: null,
+      });
+      fetchInitialData();
+    } catch (error: any) {
+      setModal({
+        isOpen: true,
+        title: "Erro",
+        message: "Erro ao finalizar serviço.",
+        type: "alert",
+        confirmAction: null,
+      });
+    }
   };
 
   // --- 2. LÓGICA DE FILTRAGEM (Atualizada para expor allUpcoming) ---
@@ -498,7 +545,28 @@ export default function HomeAuth() {
                         </div>
 
                         {/* Botão de Cancelar Rápido (Opcional, mas útil) */}
-                        <div className={styles.actionBox}>
+                        <div
+                          className={styles.actionBox}
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            flexDirection: "column",
+                          }} // Ajuste para alinhar os botões
+                        >
+                          {/* BOTÃO FINALIZAR (IGUAL AO PAINEL) */}
+                          <button
+                            className={styles.btnIconCancel} // Reusando estilo, mas podemos ajustar ou criar btnIconSuccess
+                            style={{
+                              borderColor: "#28a745",
+                              color: "#28a745",
+                              backgroundColor: "transparent",
+                            }}
+                            onClick={() => openCompleteModal(appt)}
+                            title="Finalizar"
+                          >
+                            ✅
+                          </button>
+
                           <button
                             className={styles.btnIconCancel}
                             onClick={() => handleCancelClick(appt.id)}
@@ -587,6 +655,38 @@ export default function HomeAuth() {
                 Ok
               </Button>
             )}
+          </ModalFooter>
+        </Modal>
+
+        {/* MODAL DE FINALIZAR SERVIÇO (IGUAL AO PAINEL) */}
+        <Modal
+          isOpen={modalComplete}
+          toggle={() => setModalComplete(!modalComplete)}
+          centered
+        >
+          <ModalHeader>Finalizar Serviço</ModalHeader>
+          <ModalBody>
+            <p>O serviço foi realizado no horário agendado?</p>
+            <div className="d-flex gap-2">
+              <Input
+                type="date"
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+              />
+              <Input
+                type="time"
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+              />
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button outline onClick={() => setModalComplete(false)}>
+              Cancelar
+            </Button>
+            <Button color="success" onClick={handleComplete}>
+              Confirmar
+            </Button>
           </ModalFooter>
         </Modal>
       </main>

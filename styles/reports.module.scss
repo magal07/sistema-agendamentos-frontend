@@ -5,6 +5,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-bottom: 80px; // Espaço para o Menu Mobile
 }
 
 .headerSection {
@@ -19,8 +20,10 @@
   color: $darkPrimaryColor;
   font-weight: 700;
   margin: 0;
+  font-size: 1.8rem;
 }
 
+/* --- FILTROS --- */
 .filterBar {
   background-color: white;
   padding: 1.5rem;
@@ -30,12 +33,12 @@
   display: flex;
   align-items: flex-end;
   gap: 1rem;
-  flex-wrap: wrap;
+  flex-wrap: wrap; // Permite quebrar linha
 }
 
 .filterGroup {
   flex: 1;
-  min-width: 200px;
+  min-width: 200px; // Garante tamanho mínimo
 
   label {
     font-size: 0.8rem;
@@ -53,10 +56,12 @@
   padding: 0.6rem 1rem;
   width: 100%;
   color: $darkGray;
+  background-color: #fff; // Garante fundo branco
 
   &:focus {
     border-color: $lightPrimaryColor;
     outline: none;
+    box-shadow: 0 0 0 3px rgba($lightPrimaryColor, 0.1);
   }
 }
 
@@ -67,11 +72,19 @@
   padding: 0.6rem 2rem;
   border-radius: 8px;
   font-weight: 600;
-  height: 42px; // Alinha com os inputs
+  height: 42px;
   transition: 0.3s;
+  white-space: nowrap; // Evita quebra de texto no botão
 
   &:hover {
     background-color: darken($darkPrimaryColor, 10%);
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    background-color: $mediumGray;
+    cursor: not-allowed;
+    transform: none;
   }
 }
 
@@ -87,6 +100,7 @@
   justify-content: center;
   border-left: 5px solid transparent;
   transition: transform 0.2s;
+  min-height: 120px; // Garante altura uniforme
 
   &:hover {
     transform: translateY(-5px);
@@ -94,36 +108,33 @@
 
   &.revenue {
     border-color: #4cd137;
-  } // Verde
+  }
   &.commission {
     border-color: #fbc531;
-  } // Amarelo
+  }
   &.expenses {
     border-color: #e84118;
-  } // Vermelho
+  }
   &.profit {
     border-color: $lightPrimaryColor;
-  } // Rosa/Tema
+  }
 }
 
 .kpiLabel {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   color: $mediumGray;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  letter-spacing: 0.5px;
 }
 
 .kpiValue {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 800;
   color: $darkGray;
-
-  small {
-    font-size: 1rem;
-    font-weight: 400;
-    color: $mediumGray;
-  }
+  word-break: break-word; // Evita estourar com números grandes
+  line-height: 1.2;
 }
 
 /* --- CHART SECTION --- */
@@ -135,15 +146,55 @@
   margin-top: 2rem;
   margin-bottom: 3rem;
   min-height: 400px;
+  position: relative; // Necessário para o ChartJS responsivo
 }
 
-/* Responsivo */
-@media (max-width: 768px) {
+/* --- RESPONSIVIDADE (Tablets e Celulares) --- */
+@media (max-width: 992px) {
   .filterBar {
-    flex-direction: column;
-    align-items: stretch;
+    gap: 15px;
   }
+
+  .filterGroup {
+    min-width: 100%; // Ocupa largura total em telas menores
+  }
+
   .btnFilter {
     width: 100%;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .pageTitle {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  .headerSection {
+    padding: 1.5rem 0;
+    text-align: center;
+  }
+
+  .kpiValue {
+    font-size: 1.4rem;
+  }
+
+  .chartSection {
+    padding: 1rem;
+    min-height: 300px;
+  }
+
+  // --- CORREÇÃO DO ERRO ---
+  // O seletor :global deve estar dentro de uma classe local (.filterGroup)
+  .filterGroup {
+    :global(.react-datepicker-wrapper) {
+      width: 100%;
+    }
+
+    // Garante que o input dentro do wrapper também ocupe tudo
+    :global(.react-datepicker__input-container) {
+      width: 100%;
+    }
   }
 }

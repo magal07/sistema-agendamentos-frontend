@@ -153,6 +153,7 @@ export default function FinancialReport() {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top" as const,
@@ -173,6 +174,7 @@ export default function FinancialReport() {
     <>
       <Head>
         <title>Relatórios Financeiros | Virtuosa</title>
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderAuth />
