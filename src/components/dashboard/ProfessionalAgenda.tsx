@@ -41,7 +41,7 @@ export default function ProfessionalAgenda({
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
-  // Estado do Modal Global (Sucesso/Erro/Confirmação)
+  // Estado do Modal Global
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -93,7 +93,7 @@ export default function ProfessionalAgenda({
     }
   }, [loadAgenda, userRole, selectedProfId]);
 
-  // --- LÓGICA DE CANCELAMENTO CORRIGIDA ---
+  // --- LÓGICA DE CANCELAMENTO ---
   const handleCancelClick = (id: number) => {
     setModal({
       isOpen: true,
@@ -104,16 +104,17 @@ export default function ProfessionalAgenda({
         try {
           const res = await api.delete(`/appointments/${id}`);
 
-          // Verifica se deu certo (204) ou se houve aviso (warning) do WPP
-          if (res.status === 204 || res.data?.type === "warning") {
-            setModal({
-              isOpen: true,
-              title: res.data?.type === "warning" ? "Aviso" : "Sucesso",
-              message: res.data?.message || "Agendamento cancelado!",
-              type: res.data?.type === "warning" ? "warning" : "success",
-              confirmAction: null,
-            });
-          }
+          // Verifica se o backend retornou aviso (ex: erro no Whats) ou sucesso total
+          const isWarning = res.data?.type === "warning";
+
+          setModal({
+            isOpen: true,
+            title: isWarning ? "Aviso" : "Sucesso",
+            message: res.data?.message || "Agendamento cancelado!",
+            type: isWarning ? "warning" : "success",
+            confirmAction: null,
+          });
+
           loadAgenda(); // Atualiza a lista
         } catch (err: any) {
           setModal({
@@ -123,7 +124,7 @@ export default function ProfessionalAgenda({
             type: "alert",
             confirmAction: null,
           });
-          loadAgenda(); // Tenta recarregar mesmo com erro para garantir sincronia
+          loadAgenda(); // Tenta recarregar para garantir sincronia
         }
       },
     });
@@ -137,14 +138,14 @@ export default function ProfessionalAgenda({
     setModalComplete(true);
   };
 
-  // --- LÓGICA DE FINALIZAÇÃO AJUSTADA (Modal em vez de Alert) ---
+  // --- LÓGICA DE FINALIZAÇÃO (Agora usando Modal) ---
   const handleComplete = async () => {
     if (!selectedAppt) return;
     try {
       const finalDate = parseISO(`${newDate}T${newTime}:00`);
       await appointmentService.complete(selectedAppt.id, finalDate);
 
-      setModalComplete(false); // Fecha o modal de data/hora
+      setModalComplete(false); // Fecha o modal de data
 
       // Abre o modal de sucesso do sistema
       setModal({
@@ -290,7 +291,7 @@ export default function ProfessionalAgenda({
         </div>
       )}
 
-      {/* Modal de Finalização (Data/Hora Real) */}
+      {/* Modal de Finalização (Data/Hora) */}
       <Modal
         isOpen={modalComplete}
         toggle={() => setModalComplete(!modalComplete)}
