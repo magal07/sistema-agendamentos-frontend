@@ -8,7 +8,7 @@ import {
   Spinner,
   Toast,
   ToastBody,
-} from "reactstrap"; // <--- Importe Toast/ToastBody
+} from "reactstrap";
 import profileService from "../../../services/profileService";
 import { useRouter } from "next/router";
 import styles from "../../../../styles/profile.module.scss";
@@ -33,10 +33,22 @@ const UserForm = function () {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // --- FUNÇÃO "TITLE CASE" (Corrige nomes compostos também) ---
+  const formatName = (str: string) => {
+    if (!str) return "";
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   useEffect(() => {
     profileService.fetchCurrent().then((user) => {
-      setFirstName(user.firstName);
-      setLastName(user.lastName);
+      // Aplica a formatação assim que carrega do banco
+      setFirstName(formatName(user.firstName));
+      setLastName(formatName(user.lastName));
+
       setPhone(user.phone);
       setEmail(user.email);
       setInitialEmail(user.email);
@@ -78,8 +90,8 @@ const UserForm = function () {
 
     try {
       await profileService.userUpdate({
-        firstName,
-        lastName,
+        firstName: formatName(firstName), // Garante formatação ao salvar
+        lastName: formatName(lastName), // Garante formatação ao salvar
         phone,
         email,
       });
@@ -88,17 +100,15 @@ const UserForm = function () {
       setToastMessage("Dados atualizados com sucesso! Redirecionando...");
       setToastIsOpen(true);
 
-      // --- REDIRECIONAMENTO ---
       setTimeout(() => {
         setToastIsOpen(false);
-        // Se mudou o email, faz logout. Se não, vai para Home.
         if (email !== initialEmail) {
           sessionStorage.clear();
-          router.push("/"); // Login/Landing
+          router.push("/");
         } else {
-          router.push("/home"); // <--- Ajuste aqui se sua rota principal for '/dashboard' ou outra
+          router.push("/home");
         }
-      }, 2000); // Espera 2 segundos para o usuário ler a mensagem
+      }, 2000);
     } catch (err) {
       setToastColor("bg-danger");
       setToastMessage("Erro ao atualizar dados.");
@@ -117,8 +127,8 @@ const UserForm = function () {
     }
     return (
       <div className={styles.avatarPlaceholder}>
-        {firstName.slice(0, 1)}
-        {lastName.slice(0, 1)}
+        {firstName.slice(0, 1).toUpperCase()}
+        {lastName.slice(0, 1).toUpperCase()}
       </div>
     );
   };
@@ -147,10 +157,15 @@ const UserForm = function () {
 
         <div className={styles.formName}>
           <p className={styles.nameAbbreviation}>
-            {firstName.slice(0, 1)}
-            {lastName.slice(0, 1)}
+            {firstName.slice(0, 1).toUpperCase()}
+            {lastName.slice(0, 1).toUpperCase()}
           </p>
-          <p className={styles.userName}>{`${firstName} ${lastName}`}</p>
+          <p
+            className={styles.userName}
+            style={{ textTransform: "capitalize" }}
+          >
+            {`${firstName} ${lastName}`}
+          </p>
         </div>
 
         <div className={styles.memberTime}>
@@ -180,7 +195,8 @@ const UserForm = function () {
               maxLength={20}
               className={styles.input}
               value={firstName}
-              onChange={(event) => setFirstName(event.target.value)}
+              style={{ textTransform: "capitalize" }} // Força visualmente via CSS
+              onChange={(event) => setFirstName(formatName(event.target.value))}
             />
           </FormGroup>
           <FormGroup>
@@ -196,7 +212,8 @@ const UserForm = function () {
               maxLength={20}
               className={styles.input}
               value={lastName}
-              onChange={(event) => setLastName(event.target.value)}
+              style={{ textTransform: "capitalize" }} // Força visualmente via CSS
+              onChange={(event) => setLastName(formatName(event.target.value))}
             />
           </FormGroup>
         </div>
@@ -239,12 +256,9 @@ const UserForm = function () {
         </Button>
       </Form>
 
-      {/* --- AQUI ESTÁ O TOAST QUE FALTAVA --- */}
       <Toast
         isOpen={toastIsOpen}
         className={`${toastColor} text-white fixed-bottom ms-3 mb-3`}
-        // fixed-bottom cola na parte inferior da tela
-        // Se preferir no topo ou meio, ajuste as classes do Bootstrap
       >
         <ToastBody className="text-center">{toastMessage}</ToastBody>
       </Toast>

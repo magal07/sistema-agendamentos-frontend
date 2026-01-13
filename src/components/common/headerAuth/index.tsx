@@ -1,14 +1,14 @@
 import Link from "next/link";
 import {
   Container,
-  Modal as ConfirmModal, // Renomeamos o Modal do Reactstrap para não conflitar
+  Modal as ConfirmModal,
   ModalHeader,
   ModalBody,
   ModalFooter,
   Button,
 } from "reactstrap";
 import styles from "./styles.module.scss";
-import Modal from "react-modal"; // Modal do dropdown (mantido)
+import Modal from "react-modal";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import profileService from "../../../services/profileService";
@@ -18,25 +18,37 @@ Modal.setAppElement("#__next");
 
 const HeaderAuth = function () {
   const router = useRouter();
-  const [modalOpen, setModalOpen] = useState(false); // Estado do Dropdown
-  const [logoutModalOpen, setLogoutModalOpen] = useState(false); // Estado do Modal de Confirmação
+  const [modalOpen, setModalOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const [initials, setInitials] = useState("");
   const [userRole, setUserRole] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
-  useEffect(() => {
-    profileService.fetchCurrent().then((user) => {
-      const role = user.role ? user.role.toLowerCase() : "";
-      const firstNameInitial = user.firstName.slice(0, 1);
-      const lastNameInitial = user.lastName.slice(0, 1);
-      setInitials(firstNameInitial + lastNameInitial);
-      setUserRole(role);
+  const [dashboardLink, setDashboardLink] = useState("/home");
 
-      if (user.avatarUrl) {
-        setAvatarUrl(`${process.env.NEXT_PUBLIC_BASE_URL}/${user.avatarUrl}`);
-      }
-    });
+  useEffect(() => {
+    profileService
+      .fetchCurrent()
+      .then((user) => {
+        const role = user.role ? user.role.toLowerCase() : "";
+        const firstNameInitial = user.firstName.slice(0, 1);
+        const lastNameInitial = user.lastName.slice(0, 1);
+
+        setInitials(firstNameInitial + lastNameInitial);
+        setUserRole(role);
+
+        if (user.avatarUrl) {
+          setAvatarUrl(`${process.env.NEXT_PUBLIC_BASE_URL}/${user.avatarUrl}`);
+        }
+
+        if (role === "client") {
+          setDashboardLink("/client/dashboard");
+        } else {
+          setDashboardLink("/admin/dashboard");
+        }
+      })
+      .catch(console.error);
   }, []);
 
   const handleOpenModal = () => {
@@ -47,13 +59,11 @@ const HeaderAuth = function () {
     setModalOpen(false);
   };
 
-  // 1. Ao clicar em Sair no dropdown, fecha o dropdown e abre a confirmação
   const handleLogoutClick = () => {
     setModalOpen(false);
     setLogoutModalOpen(true);
   };
 
-  // 2. Executa o logout de fato
   const confirmLogout = () => {
     sessionStorage.clear();
     router.push("/");
@@ -62,22 +72,41 @@ const HeaderAuth = function () {
   return (
     <>
       <div className={styles.nav}>
-        <Container className={styles.navContainer}>
-          <Link href="/home">
+        {/* Adicionei position: relative aqui para o absolute funcionar dentro */}
+        <Container
+          className={styles.navContainer}
+          style={{ position: "relative" }}
+        >
+          {/* 1. ESQUERDA: LOGO */}
+          <Link href={dashboardLink}>
             <img src="/logo.png" alt="logo" className={styles.imgLogoNav} />
           </Link>
 
-          <div className="d-flex align-items-center">
-            {(userRole === "professional" ||
-              userRole === "admin" ||
-              userRole === "client") && (
-              <Link href="/agenda" style={{ textDecoration: "none" }}>
-                <div className={styles.agendaLink}>
-                  <span>MINHA AGENDA</span>
-                </div>
+          {/* 2. CENTRO: NOME DO SISTEMA COM BRILHO (Posicionamento Absoluto) */}
+          {(userRole === "professional" ||
+            userRole === "admin" ||
+            userRole === "client") && (
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%", // Adicionei top: 50% para centralizar verticalmente também
+                // Ajustei o translate. Se quiser jogar pra direita, diminua o -50%. Ex: -40%
+                // Mas o correto matemático é -50%. Se parecer torto, é porque os itens da esquerda (logo) e direita (avatar) têm larguras diferentes.
+                // Se quiser compensar visualmente para a direita, pode usar 'translateX(-40%)' ou adicionar 'marginLeft: "20px"'
+                transform: "translate(-50%, -50%)",
+                zIndex: 1,
+                width: "max-content", // Garante que a div não quebre linha
+              }}
+            >
+              <Link href={dashboardLink} className={styles.brandTitle}>
+                ESPAÇO VIRTUOSA
               </Link>
-            )}
+            </div>
+          )}
 
+          {/* 3. DIREITA: BOTÃO APP + AVATAR */}
+          <div className="d-flex align-items-center">
             <InstallButton />
 
             {avatarUrl ? (
@@ -95,7 +124,7 @@ const HeaderAuth = function () {
             )}
           </div>
 
-          {/* DROPDOWN MENU (MANTIDO IGUAL) */}
+          {/* MENUS MODAIS (Sem alterações) */}
           <Modal
             isOpen={modalOpen}
             onRequestClose={handleCloseModal}
@@ -107,7 +136,12 @@ const HeaderAuth = function () {
               <p className={styles.modalLink}>Meus Dados</p>
             </Link>
 
-            {/* Alterado para chamar a confirmação */}
+            <Link href={dashboardLink}>
+              <p className={styles.modalLink}>
+                {userRole === "client" ? "Minha Área" : "Painel de Gestão"}
+              </p>
+            </Link>
+
             <p className={styles.modalLink} onClick={handleLogoutClick}>
               Sair
             </p>
@@ -115,7 +149,6 @@ const HeaderAuth = function () {
         </Container>
       </div>
 
-      {/* NOVO: MODAL DE CONFIRMAÇÃO (BOOTSTRAP) */}
       <ConfirmModal
         isOpen={logoutModalOpen}
         toggle={() => setLogoutModalOpen(false)}

@@ -1,46 +1,107 @@
 @import "../../../../styles/colors.module.scss";
 
 .nav {
-  background-color: $blackGray; // A cor vem pra cá
+  background-color: $blackGray;
   border-bottom: 1px solid $lightGray;
-  width: 100%; // Garante largura total
-  // Removemos padding, display flex, etc daqui
+  width: 100%;
 }
 
-// O Container Interno: Responsável por alinhar o conteúdo e dar espaçamento
 .navContainer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 0; // O padding vertical fica aqui
+  padding: 1.5rem 0;
+  position: relative; // Importante para o posicionamento absoluto do título funcionar
 }
 
-// --- NOVO: Link da Agenda ---
-.agendaLink {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem; // Espaço do gap-2
+// --- NOVO: EFEITO DO TÍTULO CENTRALIZADO ---
+.brandTitle {
+  font-weight: 800; // Bem grosso para o efeito aparecer bem
+  font-size: 1.4rem; // Tamanho legível
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-decoration: none;
+  position: relative;
+  display: inline-block;
   cursor: pointer;
 
-  // Cor Base: Cinza Escuro (para aparecer no fundo branco)
-  color: $lightPrimaryColor;
+  // 1. O Efeito do Brilho Rosa Passando
+  // O fundo é um gradiente: Cinza -> Rosa Brilhante -> Cinza
+  background: linear-gradient(
+    to right,
+    #4a4a4a 0%,
+    // Cor normal (Cinza escuro)
+    #4a4a4a 40%,
+    $lightPrimaryColor 50%,
+    // O BRILHO ROSA (Vem das suas variáveis)
+    #4a4a4a 60%,
+    #4a4a4a 100%
+  );
+  background-size: 200% auto; // Aumenta o fundo para podermos mover ele
 
-  margin-right: 20px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 14px;
-  white-space: nowrap;
-  transition: all 0.3s ease;
+  // Corta o fundo no formato do texto
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; // Deixa o texto transparente para ver o fundo
 
-  // Efeito Hover: Fica Rosa
-  &:hover {
-    color: $darkPrimaryColor;
-    transform: translateY(-1px);
+  // Animação do brilho passando a cada 3s
+  animation: shine 3s linear infinite;
+
+  // 2. Os "Brilhinhos" (Estrelinhas)
+  &::before,
+  &::after {
+    content: "✦"; // Caractere de brilho
+    position: absolute;
+    color: $lightPrimaryColor; // Cor rosa
+    opacity: 0;
+    text-shadow: 0 0 5px rgba($lightPrimaryColor, 0.8); // Luzinha em volta
+    pointer-events: none;
+  }
+
+  // Brilho da Esquerda (Topo)
+  &::before {
+    top: -10px;
+    left: -15px;
+    font-size: 12px;
+    animation: sparkle 3s ease-in-out infinite;
+    animation-delay: 1.2s; // Aparece logo depois do brilho passar
+  }
+
+  // Brilho da Direita (Baixo)
+  &::after {
+    bottom: -5px;
+    right: -15px;
+    font-size: 16px;
+    animation: sparkle 3s ease-in-out infinite;
+    animation-delay: 1.6s;
   }
 }
-// ---------------------------
 
-// Logo
+// Animação do Texto (Move o fundo da esquerda pra direita)
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+// Animação das Estrelinhas (Aparece, cresce, gira e some)
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) rotate(45deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(90deg);
+  }
+}
+
+// ---------------------------------------------
+
 .imgLogoNav {
   height: 65px;
   width: auto;
@@ -48,7 +109,6 @@
   margin-top: -10px;
 }
 
-// Input de Pesquisa
 .input {
   background-color: $blackGray !important;
   border: 1px solid $lightGray !important;
@@ -73,7 +133,6 @@
   }
 }
 
-// Ícone de Lupa
 .searchImg {
   width: 20px;
   height: 20px;
@@ -89,7 +148,6 @@
   }
 }
 
-// Círculo com as Iniciais (Avatar)
 .userProfile {
   width: 42px;
   height: 42px;
@@ -113,7 +171,7 @@
   }
 }
 
-// --- MODAL (Menu Flutuante) ---
+// --- MODAL ---
 .overlayModal {
   background-color: rgba(0, 0, 0, 0.3);
   position: fixed;

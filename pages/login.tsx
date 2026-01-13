@@ -7,15 +7,17 @@ import { useRouter } from "next/router";
 import { useEffect, useState, type FormEvent } from "react";
 import ToastComponent from "../src/components/common/toast";
 import { authService } from "../src/services/authService";
+import profileService from "../src/services/profileService"; // <--- IMPORTANTE
 import { useLoggedInRedirect } from "../utils/util";
 import { Turnstile } from "@marsidev/react-turnstile";
-import Link from "next/link"; // 1. Importação necessária
+import Link from "next/link";
 
 const Login = function () {
   const router = useRouter();
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [toastIsOpen, setToastIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [loading, setLoading] = useState(false); // <--- Estado de Loading no botão
 
   // Estado para armazenar o token do Cloudflare
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -39,33 +41,59 @@ const Login = function () {
     event.preventDefault();
 
     if (!turnstileToken) {
-      setToastType("error");
-      setToastIsOpen(true);
-      setTimeout(() => setToastIsOpen(false), 3000);
-      setToastMessage("Por favor, verifique que você não é um robô.");
+      showToast("error", "Por favor, verifique que você não é um robô.");
       return;
     }
 
+    setLoading(true); // Trava o botão
     const formData = new FormData(event.currentTarget);
-    const email = formData.get("email")!.toString();
+    const email = formData.get("email")!.toString().toLowerCase();
     const password = formData.get("password")!.toString();
     const params = { email, password, turnstileToken };
 
     try {
-      const { status } = await authService.login(params);
+      const { status, data } = await authService.login(params);
 
       if (status === 200) {
-        router.push("/home");
+        // 1. Salva Token
+        sessionStorage.setItem("onebitflix-token", data.token);
+
+        // 2. Descobre a Role (Perfil)
+        // Tenta pegar direto da resposta do login, se não vier, busca o perfil
+        let role = data.user?.role;
+
+        if (!role) {
+          const user = await profileService.fetchCurrent();
+          role = user.role;
+        }
+
+        // 3. Redirecionamento Baseado no Perfil
+        // Normalizamos para lowercase para evitar erro de ADMIN vs admin
+        const roleLower = role.toLowerCase();
+
+        if (roleLower === "client") {
+          router.push("/client/dashboard");
+        } else {
+          // ADMIN, COMPANY_ADMIN e PROFESSIONAL vão para a gestão
+          router.push("/admin/dashboard");
+        }
       }
     } catch (error: any) {
-      // AGORA O ERRO É CAPTURADO AQUI E NÃO TRAVA MAIS
-      setToastType("error");
-      setToastIsOpen(true);
-      setTimeout(() => setToastIsOpen(false), 3000);
-      setToastMessage(
+      setLoading(false); // Destrava botão
+      showToast(
+        "error",
         error.response?.data?.message || "Email ou senha incorretos!"
       );
+      // Reseta o Turnstile se der erro (opcional, mas recomendado)
+      setTurnstileToken("");
     }
+  };
+
+  const showToast = (type: "success" | "error", msg: string) => {
+    setToastType(type);
+    setToastMessage(msg);
+    setToastIsOpen(true);
+    setTimeout(() => setToastIsOpen(false), 3000);
   };
 
   return (
@@ -113,7 +141,6 @@ const Login = function () {
               ></Input>
             </FormGroup>
 
-            {/* --- LINK ESQUECI MINHA SENHA --- */}
             <div className="d-flex justify-content-end mb-3">
               <Link
                 href="/forgot-password"
@@ -127,20 +154,21 @@ const Login = function () {
               </Link>
             </div>
 
-            {/* --- WIDGET CLOUDFLARE --- */}
             <div className="d-flex justify-content-center mb-4 mt-3">
               <Turnstile
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
                 onSuccess={(token) => setTurnstileToken(token)}
-                options={{
-                  theme: "light",
-                  language: "pt-BR",
-                }}
+                options={{ theme: "light", language: "pt-BR" }}
               />
             </div>
 
-            <Button type="submit" outline className={styles.formBtn}>
-              ENTRAR
+            <Button
+              type="submit"
+              outline
+              className={styles.formBtn}
+              disabled={loading}
+            >
+              {loading ? "ENTRANDO..." : "ENTRAR"}
             </Button>
           </Form>
           <ToastComponent

@@ -29,7 +29,7 @@ const Register = function () {
     const firstName = formData.get("firstName")!.toString();
     const lastName = formData.get("lastName")!.toString();
     const birth = formData.get("birth")!.toString();
-    const email = formData.get("email")!.toString();
+    const email = formData.get("email")!.toString().toLowerCase();
     const password = formData.get("password")!.toString();
     const confirmPassword = formData.get("confirmPassword")!.toString();
 
