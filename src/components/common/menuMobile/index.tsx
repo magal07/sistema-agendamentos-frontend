@@ -13,7 +13,8 @@ import {
   FiSearch,
   FiList,
   FiClock,
-  FiLogOut, // <--- Adicionado
+  FiLogOut,
+  FiArrowLeft, // <--- Importe a seta para esquerda
 } from "react-icons/fi";
 
 // Definição do tipo do item de menu
@@ -32,7 +33,6 @@ const MenuMobile = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    // Busca o usuário para saber o cargo
     profileService
       .fetchCurrent()
       .then((user) => {
@@ -40,7 +40,6 @@ const MenuMobile = () => {
         defineMenu(user.role);
       })
       .catch(() => {
-        // Se não estiver logado, define menu público ou redireciona
         setRole("visitor");
       });
   }, []);
@@ -61,7 +60,6 @@ const MenuMobile = () => {
         { label: "Perfil", icon: <FiUser />, path: "/profile" },
       ];
     }
-
     // --- 2. PROFISSIONAL ---
     else if (userRole === "professional") {
       items = [
@@ -71,7 +69,6 @@ const MenuMobile = () => {
         { label: "Perfil", icon: <FiUser />, path: "/profile" },
       ];
     }
-
     // --- 3. CLIENTE (PADRÃO) ---
     else {
       items = [
@@ -87,17 +84,14 @@ const MenuMobile = () => {
     setMenuItems(items);
   };
 
-  // Função para checar se o link está ativo
   const isActive = (path: string) => {
-    // Se for o botão sair, podemos dar uma cor diferente (opcional)
     if (path === "logout") return "";
     return router.pathname === path ? styles.active : "";
   };
 
-  // Função que intercepta o clique
   const handleNavigation = (path: string) => {
     if (path === "logout") {
-      setModalOpen(true); // Abre o modal
+      setModalOpen(true);
     } else {
       router.push(path);
     }
@@ -108,20 +102,31 @@ const MenuMobile = () => {
     router.push("/");
   };
 
-  if (!role) return null; // Não mostra nada enquanto carrega
+  if (!role) return null;
 
   return (
     <>
+      {/* --- BOTÃO FLUTUANTE DE VOLTAR --- */}
+      {/* Ele fica fora da .mobileNav para podermos posicionar acima dela */}
+      <button
+        className={styles.floatingBackBtn}
+        onClick={() => router.back()}
+        aria-label="Voltar"
+      >
+        <FiArrowLeft />
+        {/* <span>VOLTAR</span> */}
+      </button>
+
       <div className={styles.mobileNav}>
         {menuItems.map((item, index) => (
           <div
             key={index}
             className={`${styles.navItem} ${isActive(item.path)}`}
             onClick={() => handleNavigation(item.path)}
-            style={item.path === "logout" ? { color: "#e74c3c" } : {}} // Cor vermelha inline pro Sair (segurança)
+            style={item.path === "logout" ? { color: "#e74c3c" } : {}}
           >
             <span className={styles.icon}>{item.icon}</span>
-            <span className={styles.label}>{item.label || item.label}</span>
+            <span className={styles.label}>{item.label}</span>
           </div>
         ))}
       </div>

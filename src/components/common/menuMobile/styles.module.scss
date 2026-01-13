@@ -1,5 +1,52 @@
 @import "../../../../styles/colors.module.scss";
 
+// --- BOTÃO FLUTUANTE DE VOLTAR ---
+.floatingBackBtn {
+  position: fixed;
+  // Cálculo: Altura do Menu (70px) + Área segura do iPhone + Margem (10px)
+  bottom: calc(70px + env(safe-area-inset-bottom) + 10px);
+  right: 15px; // Alinhado à direita (acima do botão Sair que geralmente é o último)
+  z-index: 9998; // Um pouco abaixo do menu para não conflitar com modais
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  background-color: #ffffff;
+  color: #555;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+    background-color: #f5f5f5;
+  }
+
+  svg {
+    font-size: 16px;
+  }
+
+  // Esconde em desktop
+  @media (min-width: 768px) {
+    display: none;
+  }
+
+  // Ajuste fino para telas muito pequenas
+  @media (max-width: 360px) {
+    bottom: calc(60px + env(safe-area-inset-bottom) + 10px);
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+}
+
 .mobileNav {
   position: fixed;
   bottom: 0;

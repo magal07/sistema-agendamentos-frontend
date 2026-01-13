@@ -7,19 +7,22 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Input, // Importado Input
+  Input,
 } from "reactstrap";
 import { useRouter } from "next/router";
 import HeaderAuth from "../src/components/common/headerAuth";
 import Footer from "../src/components/common/footer";
 import { appointmentService } from "../src/services/appointmentService";
 import profileService from "../src/services/profileService";
-import { format, isAfter, getHours, parseISO } from "date-fns"; // Importado parseISO
+import { format, isAfter, getHours, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import styles from "../styles/homeAuth.module.scss";
 import MenuMobile from "../src/components/common/menuMobile";
 
-// --- Componentes de Ícones ---
+// --- NOVOS ÍCONES PARA OS CARDS ---
+import { FiPieChart, FiUserPlus, FiCalendar, FiClock } from "react-icons/fi";
+
+// --- Componentes de Ícones (Legado) ---
 const Icons = {
   Calendar: () => <span>📅</span>,
   User: () => <span>👤</span>,
@@ -28,14 +31,13 @@ const Icons = {
   Clock: () => <span>⏰</span>,
 };
 
-// --- 1. ATUALIZAÇÃO DA INTERFACE (Adicionado 'client') ---
 interface Appointment {
   id: number;
   appointmentDate: string | Date;
   status: "confirmed" | "pending" | "cancelled" | "completed";
   Service?: { name: string };
   professional?: { firstName: string };
-  client?: { firstName: string; lastName?: string }; // <--- NOVO
+  client?: { firstName: string; lastName?: string };
 }
 
 export default function HomeAuth() {
@@ -59,13 +61,12 @@ export default function HomeAuth() {
 
   const closeModal = () => setModal({ ...modal, isOpen: false });
 
-  // --- ESTADOS PARA FINALIZAR SERVIÇO (Copiado de ProfessionalAgenda) ---
+  // --- ESTADOS PARA FINALIZAR SERVIÇO ---
   const [modalComplete, setModalComplete] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
-  // --- SAUDAÇÃO ---
   const greeting = useMemo(() => {
     const hour = getHours(new Date());
     if (hour >= 5 && hour < 12) return "Bom dia";
@@ -94,11 +95,9 @@ export default function HomeAuth() {
     fetchInitialData();
   }, []);
 
-  // --- FUNÇÃO DE CANCELAR ---
   const executeCancellation = async (id: number) => {
     try {
       const res = await appointmentService.cancel(id);
-
       if (res.data && res.data.type === "warning") {
         setModal({
           isOpen: true,
@@ -139,15 +138,12 @@ export default function HomeAuth() {
     });
   };
 
-  // --- FUNÇÕES DE FINALIZAR SERVIÇO (Adicionadas) ---
   const openCompleteModal = (appt: Appointment) => {
     setSelectedAppt(appt);
-    // Verifica se appointmentDate é string ou Date e converte para Date se necessário para usar com format
     const dt =
       typeof appt.appointmentDate === "string"
         ? parseISO(appt.appointmentDate)
         : appt.appointmentDate;
-
     setNewDate(format(dt, "yyyy-MM-dd"));
     setNewTime(format(dt, "HH:mm"));
     setModalComplete(true);
@@ -158,7 +154,6 @@ export default function HomeAuth() {
     try {
       const finalDate = parseISO(`${newDate}T${newTime}:00`);
       await appointmentService.complete(selectedAppt.id, finalDate);
-
       setModalComplete(false);
       setModal({
         isOpen: true,
@@ -179,13 +174,11 @@ export default function HomeAuth() {
     }
   };
 
-  // --- 2. LÓGICA DE FILTRAGEM (Atualizada para expor allUpcoming) ---
   const { upcomingList, historyList, nextAppointment, allUpcoming } =
     useMemo(() => {
       const now = new Date();
       const upcoming: Appointment[] = [];
       const history: Appointment[] = [];
-
       appointments.forEach((appt) => {
         const apptDate = new Date(appt.appointmentDate);
         if (
@@ -198,7 +191,6 @@ export default function HomeAuth() {
           history.push(appt);
         }
       });
-
       upcoming.sort(
         (a, b) =>
           new Date(a.appointmentDate).getTime() -
@@ -209,18 +201,16 @@ export default function HomeAuth() {
           new Date(b.appointmentDate).getTime() -
           new Date(a.appointmentDate).getTime()
       );
-
       return {
         upcomingList: upcoming.length > 0 ? upcoming.slice(1) : [],
         historyList: history,
         nextAppointment: upcoming.length > 0 ? upcoming[0] : null,
-        allUpcoming: upcoming, // <--- Lista completa para a Profissional
+        allUpcoming: upcoming,
       };
     }, [appointments]);
 
   const displayList = activeTab === "upcoming" ? upcomingList : historyList;
 
-  // --- SKELETON ---
   const SkeletonCard = () => (
     <div className={`${styles.appointmentCard} ${styles.skeletonPulse}`}>
       <div
@@ -260,7 +250,6 @@ export default function HomeAuth() {
       <main className={styles.main}>
         <HeaderAuth />
 
-        {/* HERO SECTION */}
         <div className={styles.heroSection}>
           <Container>
             <div className={styles.heroHeader}>
@@ -282,7 +271,6 @@ export default function HomeAuth() {
               </div>
             </div>
 
-            {/* DESTAQUE (APENAS CLIENTE) */}
             {userRole === "client" && !loading && nextAppointment && (
               <div className={styles.highlightCard}>
                 <div className={styles.glassEffect}>
@@ -290,7 +278,6 @@ export default function HomeAuth() {
                     <span className={styles.badgeNext}>Próximo Horário</span>
                     <span className={styles.badgeConfirmed}>Confirmado</span>
                   </div>
-
                   <div className={styles.highlightContent}>
                     <div className={styles.bigDate}>
                       <span>
@@ -330,7 +317,6 @@ export default function HomeAuth() {
                       </p>
                     </div>
                   </div>
-
                   <div
                     className="mt-3 text-end"
                     style={{
@@ -352,7 +338,6 @@ export default function HomeAuth() {
               </div>
             )}
 
-            {/* EMPTY STATE CLIENTE */}
             {userRole === "client" && !loading && !nextAppointment && (
               <div className={styles.emptyHeroCard}>
                 <h3>Tudo tranquilo por aqui ✨</h3>
@@ -368,12 +353,9 @@ export default function HomeAuth() {
           </Container>
         </div>
 
-        {/* --- CONTEÚDO PRINCIPAL --- */}
         {userRole === "client" ? (
-          // VISÃO CLIENTE
           <>
             <div className={styles.actionsContainer}>
-              {/* ... (Botões de Ação do Cliente - inalterados) ... */}
               <Container>
                 <div className={styles.scrollableRow}>
                   <button
@@ -435,8 +417,8 @@ export default function HomeAuth() {
               <div className={styles.listContainer}>
                 {loading ? (
                   <>
-                    <SkeletonCard />
-                    <SkeletonCard />
+                    {" "}
+                    <SkeletonCard /> <SkeletonCard />{" "}
                   </>
                 ) : displayList.length > 0 ? (
                   displayList.map((appt) => (
@@ -502,18 +484,63 @@ export default function HomeAuth() {
         ) : (
           // --- VISÃO ADMIN / PROFISSIONAL ---
           <Container className="py-4">
-            {/* 3. LISTA DE PRÓXIMOS 10 AGENDAMENTOS (SÓ PROFISSIONAL) */}
+            {/* GRID DE CARDS CHARMOSOS (NOVO DESIGN) */}
+            <div className={styles.dashboardGrid}>
+              {/* CARD: RELATÓRIOS (Só Admin) */}
+              {(userRole === "admin" || userRole === "company_admin") && (
+                <div
+                  className={styles.dashboardCard}
+                  onClick={() => router.push("/reports/financial")}
+                >
+                  <div className={`${styles.cardIcon} ${styles.iconPurple}`}>
+                    <FiPieChart />
+                  </div>
+                  <div className={styles.cardContent}>
+                    <h3>Relatórios</h3>
+                    <p>Financeiro e métricas</p>
+                  </div>
+                </div>
+              )}
+
+              {/* CARD: AGENDAR CLIENTE */}
+              <div
+                className={styles.dashboardCard}
+                onClick={() => router.push("/schedule-client")}
+              >
+                <div className={`${styles.cardIcon} ${styles.iconPink}`}>
+                  <FiUserPlus />
+                </div>
+                <div className={styles.cardContent}>
+                  <h3>Novo Agendamento</h3>
+                  <p>Marcar para cliente</p>
+                </div>
+              </div>
+
+              {/* CARD: VER AGENDA */}
+              <div
+                className={styles.dashboardCard}
+                onClick={() => (window.location.href = "/agenda")}
+              >
+                <div className={`${styles.cardIcon} ${styles.iconBlue}`}>
+                  <FiCalendar />
+                </div>
+                <div className={styles.cardContent}>
+                  <h3>Agenda Completa</h3>
+                  <p>Visualizar calendário</p>
+                </div>
+              </div>
+            </div>
+            {/* FIM GRID */}
+
             {userRole === "professional" && (
-              <div className="mb-5">
+              <div className="mt-5">
                 <h3 className={styles.appointmentsTitle}>
                   Seus Próximos Agendamentos
                 </h3>
-
                 {loading ? (
                   <SkeletonCard />
                 ) : allUpcoming.length > 0 ? (
                   <div className={styles.listContainer}>
-                    {/* PEGA OS 10 PRIMEIROS */}
                     {allUpcoming.slice(0, 10).map((appt) => (
                       <div
                         key={appt.id}
@@ -530,9 +557,7 @@ export default function HomeAuth() {
                             })}
                           </span>
                         </div>
-
                         <div className={styles.infoBox}>
-                          {/* Mostra nome do CLIENTE */}
                           <p className="mb-1 text-muted small">Cliente</p>
                           <h4 className="mb-1">
                             {appt.client?.firstName} {appt.client?.lastName}
@@ -543,19 +568,16 @@ export default function HomeAuth() {
                             {appt.Service?.name}
                           </p>
                         </div>
-
-                        {/* Botão de Cancelar Rápido (Opcional, mas útil) */}
                         <div
                           className={styles.actionBox}
                           style={{
                             display: "flex",
                             gap: "8px",
                             flexDirection: "column",
-                          }} // Ajuste para alinhar os botões
+                          }}
                         >
-                          {/* BOTÃO FINALIZAR (IGUAL AO PAINEL) */}
                           <button
-                            className={styles.btnIconCancel} // Reusando estilo, mas podemos ajustar ou criar btnIconSuccess
+                            className={styles.btnIconCancel}
                             style={{
                               borderColor: "#28a745",
                               color: "#28a745",
@@ -566,7 +588,6 @@ export default function HomeAuth() {
                           >
                             ✅
                           </button>
-
                           <button
                             className={styles.btnIconCancel}
                             onClick={() => handleCancelClick(appt.id)}
@@ -585,42 +606,12 @@ export default function HomeAuth() {
                 )}
               </div>
             )}
-
-            {/* DASHBOARD GERAL (Botões) */}
-            <div className={styles.adminDashboard}>
-              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-                {(userRole === "admin" || userRole === "company_admin") && (
-                  <button
-                    className={styles.btnPrimary}
-                    onClick={() => router.push("/reports/financial")}
-                  >
-                    📊 Relatórios
-                  </button>
-                )}
-
-                {/* BOTÃO AGENDAR CLIENTE */}
-                <button
-                  className={styles.btnPrimary}
-                  onClick={() => router.push("/schedule-client")}
-                >
-                  ➕ Agendar Cliente
-                </button>
-                {/* Botão Agenda */}
-                <button
-                  className={styles.btnPrimary}
-                  onClick={() => (window.location.href = "/agenda")}
-                >
-                  📅 Ver Agenda Completa
-                </button>
-              </div>
-            </div>
           </Container>
         )}
 
         <Footer />
         <MenuMobile />
 
-        {/* MODAL GLOBAL */}
         <Modal isOpen={modal.isOpen} toggle={closeModal} centered>
           <ModalHeader
             toggle={closeModal}
@@ -640,15 +631,16 @@ export default function HomeAuth() {
           <ModalFooter>
             {modal.type === "confirm" ? (
               <>
+                {" "}
                 <Button color="secondary" outline onClick={closeModal}>
                   Voltar
-                </Button>
+                </Button>{" "}
                 <Button
                   color="danger"
                   onClick={() => modal.confirmAction && modal.confirmAction()}
                 >
                   Confirmar
-                </Button>
+                </Button>{" "}
               </>
             ) : (
               <Button color="primary" onClick={closeModal}>
@@ -658,7 +650,6 @@ export default function HomeAuth() {
           </ModalFooter>
         </Modal>
 
-        {/* MODAL DE FINALIZAR SERVIÇO (IGUAL AO PAINEL) */}
         <Modal
           isOpen={modalComplete}
           toggle={() => setModalComplete(!modalComplete)}
