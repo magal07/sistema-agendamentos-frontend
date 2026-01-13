@@ -3,7 +3,7 @@ import api from "./api";
 interface ListParams {
   start: string;
   end: string;
-  professionalId?: number;
+  professionalId?: number | null;
 }
 
 interface RescheduleParams {

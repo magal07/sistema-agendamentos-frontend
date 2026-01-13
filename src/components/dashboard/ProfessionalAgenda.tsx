@@ -41,6 +41,7 @@ export default function ProfessionalAgenda({
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
+  // Estado do Modal Global (Sucesso/Erro/Confirmação)
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -51,7 +52,7 @@ export default function ProfessionalAgenda({
 
   const closeModal = () => setModal({ ...modal, isOpen: false });
 
-  // 1. Carrega dados iniciais (Role e Lista de Profissionais se for Admin)
+  // 1. Carrega dados iniciais
   useEffect(() => {
     const fetchInitialInfo = async () => {
       const user = await profileService.fetchCurrent();
@@ -60,7 +61,6 @@ export default function ProfessionalAgenda({
       if (user.role === "admin" || user.role === "company_admin") {
         const profs = await professionalService.getAll();
         setProfessionals(profs);
-        // Se não veio um ID por prop, seleciona o primeiro da lista para não vir vazio
         if (!selectedProfId && profs.length > 0) {
           setSelectedProfId(profs[0].id);
         }
@@ -69,13 +69,11 @@ export default function ProfessionalAgenda({
     fetchInitialInfo();
   }, []);
 
-  // 2. Função de carregamento da agenda (Memoizada para evitar loops)
+  // 2. Carregamento da agenda
   const loadAgenda = useCallback(async () => {
     setLoading(true);
     try {
-      // Importante: Se for admin, usamos o selectedProfId do filtro local ou da prop
       const idToFilter = selectedProfId;
-
       const url = idToFilter
         ? `/appointments?professionalId=${idToFilter}`
         : "/appointments";
@@ -90,12 +88,12 @@ export default function ProfessionalAgenda({
   }, [selectedProfId]);
 
   useEffect(() => {
-    // Só carrega se tivermos a role definida ou se for profissional (que não precisa de ID no filtro)
     if (userRole === "professional" || selectedProfId) {
       loadAgenda();
     }
   }, [loadAgenda, userRole, selectedProfId]);
 
+  // --- LÓGICA DE CANCELAMENTO CORRIGIDA ---
   const handleCancelClick = (id: number) => {
     setModal({
       isOpen: true,
@@ -104,23 +102,28 @@ export default function ProfessionalAgenda({
       type: "confirm",
       confirmAction: async () => {
         try {
-          await api.delete(`/appointments/${id}`);
-          setModal({
-            isOpen: true,
-            title: "Sucesso",
-            message: "Cancelado!",
-            type: "success",
-            confirmAction: null,
-          });
-          loadAgenda();
+          const res = await api.delete(`/appointments/${id}`);
+
+          // Verifica se deu certo (204) ou se houve aviso (warning) do WPP
+          if (res.status === 204 || res.data?.type === "warning") {
+            setModal({
+              isOpen: true,
+              title: res.data?.type === "warning" ? "Aviso" : "Sucesso",
+              message: res.data?.message || "Agendamento cancelado!",
+              type: res.data?.type === "warning" ? "warning" : "success",
+              confirmAction: null,
+            });
+          }
+          loadAgenda(); // Atualiza a lista
         } catch (err: any) {
           setModal({
             isOpen: true,
             title: "Erro",
-            message: "Erro ao cancelar",
+            message: err.response?.data?.message || "Erro ao cancelar",
             type: "alert",
             confirmAction: null,
           });
+          loadAgenda(); // Tenta recarregar mesmo com erro para garantir sincronia
         }
       },
     });
@@ -134,15 +137,34 @@ export default function ProfessionalAgenda({
     setModalComplete(true);
   };
 
+  // --- LÓGICA DE FINALIZAÇÃO AJUSTADA (Modal em vez de Alert) ---
   const handleComplete = async () => {
     if (!selectedAppt) return;
     try {
       const finalDate = parseISO(`${newDate}T${newTime}:00`);
       await appointmentService.complete(selectedAppt.id, finalDate);
-      setModalComplete(false);
+
+      setModalComplete(false); // Fecha o modal de data/hora
+
+      // Abre o modal de sucesso do sistema
+      setModal({
+        isOpen: true,
+        title: "Sucesso",
+        message: "Serviço finalizado e comissão gerada! 💰",
+        type: "success",
+        confirmAction: null,
+      });
+
       loadAgenda();
-    } catch (error) {
-      alert("Erro ao finalizar serviço.");
+    } catch (error: any) {
+      // Abre o modal de erro se falhar
+      setModal({
+        isOpen: true,
+        title: "Erro",
+        message: error.response?.data?.message || "Erro ao finalizar serviço.",
+        type: "alert",
+        confirmAction: null,
+      });
     }
   };
 
@@ -159,7 +181,6 @@ export default function ProfessionalAgenda({
         </Button>
       </div>
 
-      {/* FILTRO DE PROFISSIONAL (Aparece apenas para ADMIN/COMPANY_ADMIN) */}
       {(userRole === "admin" || userRole === "company_admin") && (
         <div className="mt-4 p-3 bg-white rounded shadow-sm border">
           <FormGroup className="mb-0" style={{ maxWidth: "400px" }}>
@@ -269,7 +290,7 @@ export default function ProfessionalAgenda({
         </div>
       )}
 
-      {/* Modais omitidos para brevidade, mantenha os que você já tem no arquivo */}
+      {/* Modal de Finalização (Data/Hora Real) */}
       <Modal
         isOpen={modalComplete}
         toggle={() => setModalComplete(!modalComplete)}
@@ -301,10 +322,17 @@ export default function ProfessionalAgenda({
         </ModalFooter>
       </Modal>
 
+      {/* Modal Global (Sucesso/Erro) */}
       <Modal isOpen={modal.isOpen} toggle={closeModal} centered>
         <ModalHeader
           toggle={closeModal}
-          className={modal.type === "success" ? "text-success" : "text-danger"}
+          className={
+            modal.type === "success"
+              ? "text-success"
+              : modal.type === "warning"
+              ? "text-warning"
+              : "text-danger"
+          }
         >
           {modal.title}
         </ModalHeader>
