@@ -22,32 +22,30 @@ moment.locale("pt-br");
 const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(Calendar);
 
-// --- CORREÇÃO DO VISUAL DOS DIAS NO MOBILE ---
+interface AgendaProps {
+  professionalId?: number | null;
+}
+
 const customFormats = {
   dayFormat: (date: Date, culture: any, localizer: any) => {
-    // Se for mobile (menor que 768px), mostra só o número (ex: "04")
     if (typeof window !== "undefined" && window.innerWidth < 768) {
       return localizer.format(date, "DD", culture);
     }
-    // No desktop mostra completo (ex: "04 Dom")
     return localizer.format(date, "DD ddd", culture);
   },
 };
 
-const AgendaComponent = () => {
+const AgendaComponent = ({ professionalId }: AgendaProps) => {
   const [events, setEvents] = useState<any[]>([]);
   const [view, setView] = useState<View>(Views.WEEK);
   const [date, setDate] = useState(new Date());
   const [userRole, setUserRole] = useState<string>("");
 
-  // --- ESTADOS DO MODAL ---
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
-  // --- CONFIGURAÇÃO VISUAL ---
   const minTime = new Date();
   minTime.setHours(6, 0, 0);
-
   const maxTime = new Date();
   maxTime.setHours(22, 0, 0);
 
@@ -62,7 +60,12 @@ const AgendaComponent = () => {
       const start = moment(date).startOf("month").subtract(1, "month").format();
       const end = moment(date).endOf("month").add(1, "month").format();
 
-      const data = await appointmentService.getAll({ start, end });
+      // Aqui o professionalId é enviado para o service
+      const data = await appointmentService.getAll({
+        start,
+        end,
+        professionalId: professionalId ?? undefined,
+      });
 
       const formattedEvents = data.map((appt: any) => {
         let title = "Agendamento";
@@ -89,7 +92,7 @@ const AgendaComponent = () => {
     } catch (error) {
       console.error("Erro ao carregar agenda:", error);
     }
-  }, [date, userRole]);
+  }, [date, userRole, professionalId]); // Recarrega se o profissional selecionado mudar
 
   useEffect(() => {
     if (userRole) {
@@ -99,13 +102,11 @@ const AgendaComponent = () => {
 
   const onEventDrop = async ({ event, start, end }: any) => {
     if (userRole === "client") return;
-
     const originalEvents = [...events];
     const updatedEvents = events.map((evt) =>
       evt.id === event.id ? { ...evt, start, end } : evt
     );
     setEvents(updatedEvents);
-
     try {
       await appointmentService.reschedule(event.id, { start, end });
     } catch (error) {
@@ -142,51 +143,19 @@ const AgendaComponent = () => {
 
   const eventPropGetter = (event: any) => {
     const status = event.resource?.status;
-
-    // 1. Cor Padrão (Rosa) - Para agendamentos confirmados/futuros
     let backgroundColor = "#b06075";
-
-    // 2. Se já foi REALIZADO -> Verde
-    if (status === "completed") {
-      backgroundColor = "#28a745";
-    }
-
-    // 3. Se foi CANCELADO -> Vermelho
-    if (status === "cancelled") {
-      backgroundColor = "#dc3545";
-    }
-
-    if (view === Views.MONTH) {
-      return { className: styles.eventBlockMonth, style: { backgroundColor } };
-    }
-
+    if (status === "completed") backgroundColor = "#28a745";
+    if (status === "cancelled") backgroundColor = "#dc3545";
     return {
-      className: styles.eventBlockTime,
+      className:
+        view === Views.MONTH ? styles.eventBlockMonth : styles.eventBlockTime,
       style: { backgroundColor },
     };
   };
 
-  const getStatusBadge = (status: string) => {
-    // Adiciona o status "Realizado"
-    if (status === "completed") return <Badge color="success">Realizado</Badge>;
-
-    // "Confirmado" agora usa a cor primária (azul) ou mantém padrão se preferir,
-    // mas o success deixamos exclusivo para o realizado.
-    if (status === "confirmed")
-      return <Badge color="primary">Confirmado</Badge>;
-
-    if (status === "cancelled") return <Badge color="danger">Cancelado</Badge>;
-
-    // Qualquer outro status (ex: pending)
-    return <Badge color="warning">Pendente</Badge>;
-  };
-  // Configuração da Toolbar customizada
   const { components } = useMemo(
     () => ({
-      components: {
-        event: CustomEvent,
-        toolbar: CustomToolbar,
-      },
+      components: { event: CustomEvent, toolbar: CustomToolbar },
     }),
     [view]
   );
@@ -205,14 +174,8 @@ const AgendaComponent = () => {
         min={minTime}
         max={maxTime}
         draggableAccessor={() => userRole !== "client"}
-        // Componentes customizados (Toolbar)
         components={components}
-        // Formatos customizados (Corrige o cabeçalho mobile)
         formats={customFormats}
-        step={30}
-        timeslots={2}
-        selectable={true}
-        resizable={userRole !== "client"}
         onEventDrop={onEventDrop}
         onSelectEvent={handleSelectEvent}
         eventPropGetter={eventPropGetter}
@@ -224,57 +187,41 @@ const AgendaComponent = () => {
           week: "Semana",
           day: "Dia",
           agenda: "Lista",
-          date: "Data",
-          time: "Hora",
-          event: "Evento",
           showMore: (total) => `+${total} mais`,
         }}
       />
 
       <Modal isOpen={modalOpen} toggle={toggleModal} centered size="sm">
-        <ModalHeader toggle={toggleModal}>
-          Detalhes do Agendamento 🌸
-        </ModalHeader>
+        <ModalHeader toggle={toggleModal}>Detalhes 🌸</ModalHeader>
         <ModalBody>
           {selectedEvent && (
             <div className="d-flex flex-column gap-2">
               <div>
-                <strong>Serviço:</strong> <br />
+                <strong>Serviço:</strong>{" "}
                 {selectedEvent.resource?.Service?.name}
               </div>
-
-              <hr className="my-2" />
-
               <div>
-                <strong>Data:</strong> <br />
-                {moment(selectedEvent.start).format("dddd, D [de] MMMM")}
+                <strong>Data:</strong>{" "}
+                {moment(selectedEvent.start).format("DD/MM/YYYY")}
               </div>
-
               <div>
-                <strong>Horário:</strong> <br />
+                <strong>Horário:</strong>{" "}
                 {moment(selectedEvent.start).format("HH:mm")} às{" "}
                 {moment(selectedEvent.end).format("HH:mm")}
               </div>
-
-              <hr className="my-2" />
-
+              <hr />
               {userRole === "client" ? (
                 <div>
-                  <strong>Profissional:</strong> <br />
-                  {selectedEvent.resource?.professional?.firstName ||
-                    "Não informado"}
+                  <strong>Profissional:</strong>{" "}
+                  {selectedEvent.resource?.professional?.firstName}
                 </div>
               ) : (
                 <div>
-                  <strong>Cliente:</strong> <br />
+                  <strong>Cliente:</strong>{" "}
                   {selectedEvent.resource?.client?.firstName}{" "}
                   {selectedEvent.resource?.client?.lastName}
                 </div>
               )}
-
-              <div className="mt-3 text-center">
-                {getStatusBadge(selectedEvent.resource?.status)}
-              </div>
             </div>
           )}
         </ModalBody>

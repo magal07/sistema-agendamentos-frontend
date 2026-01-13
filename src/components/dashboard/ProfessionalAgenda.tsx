@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Table,
   Button,
@@ -8,25 +8,39 @@ import {
   ModalBody,
   ModalFooter,
   Input,
+  FormGroup,
+  Label,
 } from "reactstrap";
 import { format, parseISO } from "date-fns";
-import api from "../../services/api";
-import { appointmentService } from "../../services/appointmentService";
-import styles from "./styles.module.scss"; // Importando o CSS
+import api from "../../../src/services/api";
+import { appointmentService } from "../../../src/services/appointmentService";
+import { professionalService } from "../../../src/services/professionalService";
+import profileService from "../../../src/services/profileService";
+import styles from "./styles.module.scss";
 
-export default function ProfessionalAgenda() {
+interface ProfessionalAgendaProps {
+  professionalId?: number | null;
+}
+
+export default function ProfessionalAgenda({
+  professionalId: initialProfId,
+}: ProfessionalAgendaProps) {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState("");
 
-  // Modais de Ação
+  // Estados para o Filtro de Admin
+  const [professionals, setProfessionals] = useState<any[]>([]);
+  const [selectedProfId, setSelectedProfId] = useState<number | null>(
+    initialProfId || null
+  );
+
+  // Modais e Estados de Conclusão
   const [modalComplete, setModalComplete] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
-
-  // Estados para Conclusão
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
-  // --- 1. ESTADO DO MODAL GLOBAL ---
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -37,49 +51,50 @@ export default function ProfessionalAgenda() {
 
   const closeModal = () => setModal({ ...modal, isOpen: false });
 
-  const showAlert = (
-    type: "success" | "warning" | "alert",
-    title: string,
-    msg: string
-  ) => {
-    setModal({ isOpen: true, type, title, message: msg, confirmAction: null });
-  };
-
+  // 1. Carrega dados iniciais (Role e Lista de Profissionais se for Admin)
   useEffect(() => {
-    loadAgenda();
+    const fetchInitialInfo = async () => {
+      const user = await profileService.fetchCurrent();
+      setUserRole(user.role);
+
+      if (user.role === "admin" || user.role === "company_admin") {
+        const profs = await professionalService.getAll();
+        setProfessionals(profs);
+        // Se não veio um ID por prop, seleciona o primeiro da lista para não vir vazio
+        if (!selectedProfId && profs.length > 0) {
+          setSelectedProfId(profs[0].id);
+        }
+      }
+    };
+    fetchInitialInfo();
   }, []);
 
-  const loadAgenda = async () => {
+  // 2. Função de carregamento da agenda (Memoizada para evitar loops)
+  const loadAgenda = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/appointments");
+      // Importante: Se for admin, usamos o selectedProfId do filtro local ou da prop
+      const idToFilter = selectedProfId;
+
+      const url = idToFilter
+        ? `/appointments?professionalId=${idToFilter}`
+        : "/appointments";
+
+      const res = await api.get(url);
       setAppointments(res.data);
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao carregar agenda:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedProfId]);
 
-  // --- 2. LÓGICA DE CANCELAMENTO ---
-  const executeCancel = async (id: number) => {
-    try {
-      const res = await api.delete(`/appointments/${id}`);
-
-      if (res.data && res.data.type === "warning") {
-        showAlert("warning", "Aviso", res.data.message);
-      } else {
-        showAlert("success", "Sucesso", "Agendamento cancelado!");
-        loadAgenda();
-      }
-    } catch (error: any) {
-      showAlert(
-        "alert",
-        "Erro",
-        error.response?.data?.message || "Erro ao cancelar"
-      );
+  useEffect(() => {
+    // Só carrega se tivermos a role definida ou se for profissional (que não precisa de ID no filtro)
+    if (userRole === "professional" || selectedProfId) {
+      loadAgenda();
     }
-  };
+  }, [loadAgenda, userRole, selectedProfId]);
 
   const handleCancelClick = (id: number) => {
     setModal({
@@ -87,11 +102,30 @@ export default function ProfessionalAgenda() {
       title: "Cancelar Agendamento",
       message: "Tem certeza que deseja cancelar este agendamento?",
       type: "confirm",
-      confirmAction: () => executeCancel(id),
+      confirmAction: async () => {
+        try {
+          await api.delete(`/appointments/${id}`);
+          setModal({
+            isOpen: true,
+            title: "Sucesso",
+            message: "Cancelado!",
+            type: "success",
+            confirmAction: null,
+          });
+          loadAgenda();
+        } catch (err: any) {
+          setModal({
+            isOpen: true,
+            title: "Erro",
+            message: "Erro ao cancelar",
+            type: "alert",
+            confirmAction: null,
+          });
+        }
+      },
     });
   };
 
-  // --- LÓGICA DE CONCLUSÃO ---
   const openCompleteModal = (appt: any) => {
     setSelectedAppt(appt);
     const dt = parseISO(appt.appointmentDate);
@@ -105,22 +139,15 @@ export default function ProfessionalAgenda() {
     try {
       const finalDate = parseISO(`${newDate}T${newTime}:00`);
       await appointmentService.complete(selectedAppt.id, finalDate);
-
       setModalComplete(false);
-      showAlert(
-        "success",
-        "Serviço Realizado",
-        "Comissão gerada com sucesso! 💰"
-      );
       loadAgenda();
-    } catch (error: any) {
-      showAlert("alert", "Erro", "Erro ao finalizar serviço.");
+    } catch (error) {
+      alert("Erro ao finalizar serviço.");
     }
   };
 
   return (
     <div className="py-4">
-      {/* HEADER: Título e Botão Ver Calendário alinhados */}
       <div className={styles.headerContainer}>
         <h4 className="mb-0">Painel de Controle 🛠️</h4>
         <Button
@@ -132,11 +159,33 @@ export default function ProfessionalAgenda() {
         </Button>
       </div>
 
+      {/* FILTRO DE PROFISSIONAL (Aparece apenas para ADMIN/COMPANY_ADMIN) */}
+      {(userRole === "admin" || userRole === "company_admin") && (
+        <div className="mt-4 p-3 bg-white rounded shadow-sm border">
+          <FormGroup className="mb-0" style={{ maxWidth: "400px" }}>
+            <Label className="fw-bold">
+              Selecionar Profissional para Gestão:
+            </Label>
+            <Input
+              type="select"
+              value={selectedProfId || ""}
+              onChange={(e) => setSelectedProfId(Number(e.target.value))}
+            >
+              <option value="">Selecione para ver a agenda...</option>
+              {professionals.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.firstName} {p.lastName}
+                </option>
+              ))}
+            </Input>
+          </FormGroup>
+        </div>
+      )}
+
       {loading ? (
-        <p className="text-center">Carregando agenda...</p>
+        <p className="text-center mt-5">Carregando agendamentos...</p>
       ) : (
-        <div className="table-responsive">
-          {/* Adicionada a classe responsiveTable do CSS module */}
+        <div className="table-responsive mt-4">
           <Table hover className={`align-middle ${styles.responsiveTable}`}>
             <thead className="table-dark">
               <tr>
@@ -148,78 +197,79 @@ export default function ProfessionalAgenda() {
               </tr>
             </thead>
             <tbody>
-              {appointments.map((appt) => (
-                <tr
-                  key={appt.id}
-                  style={{ opacity: appt.status === "cancelled" ? 0.5 : 1 }}
-                >
-                  {/* data-label é usado pelo CSS no mobile */}
-                  <td data-label="Horário">
-                    <div>
+              {appointments.length > 0 ? (
+                appointments.map((appt) => (
+                  <tr
+                    key={appt.id}
+                    style={{ opacity: appt.status === "cancelled" ? 0.5 : 1 }}
+                  >
+                    <td data-label="Horário">
                       <strong>
                         {format(parseISO(appt.appointmentDate), "dd/MM")}
                       </strong>
-                      <br className={styles.hideMobile} />{" "}
+                      <br />
                       {format(parseISO(appt.appointmentDate), "HH:mm")}
-                    </div>
-                  </td>
-
-                  <td data-label="Cliente">
-                    <div>
-                      {appt.client?.firstName || "Cliente"}
-                      <br className={styles.hideMobile} />{" "}
+                    </td>
+                    <td data-label="Cliente">
+                      {appt.client?.firstName} {appt.client?.lastName}
+                      <br />
                       <small className="text-muted">{appt.client?.phone}</small>
-                    </div>
-                  </td>
-
-                  <td data-label="Serviço">
-                    {appt.Service?.name || appt.service?.name || "Serviço"}
-                  </td>
-
-                  <td data-label="Status">
-                    {appt.status === "confirmed" && (
-                      <Badge color="primary">Confirmado</Badge>
-                    )}
-                    {appt.status === "completed" && (
-                      <Badge color="success">Realizado</Badge>
-                    )}
-                    {appt.status === "cancelled" && (
-                      <Badge color="danger">Cancelado</Badge>
-                    )}
-                  </td>
-
-                  <td className="text-end" data-label="Ações">
-                    {appt.status !== "cancelled" &&
-                      appt.status !== "completed" && (
-                        <div className={styles.actionsGroup}>
-                          <Button
-                            size="sm"
-                            color="success"
-                            className="me-1"
-                            onClick={() => openCompleteModal(appt)}
-                            title="Finalizar"
-                          >
-                            ✅
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="danger"
-                            onClick={() => handleCancelClick(appt.id)}
-                            title="Cancelar"
-                          >
-                            🗑️
-                          </Button>
-                        </div>
-                      )}
+                    </td>
+                    <td data-label="Serviço">{appt.Service?.name}</td>
+                    <td data-label="Status">
+                      <Badge
+                        color={
+                          appt.status === "confirmed"
+                            ? "primary"
+                            : appt.status === "completed"
+                            ? "success"
+                            : "danger"
+                        }
+                      >
+                        {appt.status === "confirmed"
+                          ? "Confirmado"
+                          : appt.status === "completed"
+                          ? "Realizado"
+                          : "Cancelado"}
+                      </Badge>
+                    </td>
+                    <td className="text-end" data-label="Ações">
+                      {appt.status !== "cancelled" &&
+                        appt.status !== "completed" && (
+                          <div className={styles.actionsGroup}>
+                            <Button
+                              size="sm"
+                              color="success"
+                              className="me-1"
+                              onClick={() => openCompleteModal(appt)}
+                            >
+                              ✅
+                            </Button>
+                            <Button
+                              size="sm"
+                              color="danger"
+                              onClick={() => handleCancelClick(appt.id)}
+                            >
+                              🗑️
+                            </Button>
+                          </div>
+                        )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="text-center py-5 text-muted">
+                    Nenhum agendamento encontrado para este profissional.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </Table>
         </div>
       )}
 
-      {/* MODAL DE CONCLUSÃO */}
+      {/* Modais omitidos para brevidade, mantenha os que você já tem no arquivo */}
       <Modal
         isOpen={modalComplete}
         toggle={() => setModalComplete(!modalComplete)}
@@ -251,19 +301,10 @@ export default function ProfessionalAgenda() {
         </ModalFooter>
       </Modal>
 
-      {/* MODAL GLOBAL */}
       <Modal isOpen={modal.isOpen} toggle={closeModal} centered>
         <ModalHeader
           toggle={closeModal}
-          className={
-            modal.type === "success"
-              ? "text-success"
-              : modal.type === "warning"
-              ? "text-warning"
-              : modal.type === "confirm"
-              ? "text-danger"
-              : ""
-          }
+          className={modal.type === "success" ? "text-success" : "text-danger"}
         >
           {modal.title}
         </ModalHeader>
