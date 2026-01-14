@@ -39,7 +39,6 @@ export default function AvailabilityPage() {
   const [saving, setSaving] = useState(false);
   const [userRole, setUserRole] = useState("");
 
-  // Estados para gestão múltipla
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [selectedProfId, setSelectedProfId] = useState<number | null>(null);
 
@@ -50,7 +49,6 @@ export default function AvailabilityPage() {
 
   const [schedule, setSchedule] = useState<any[]>([]);
 
-  // Função para carregar horários (pode ser o "meu" ou de um ID específico)
   const fetchAvailabilityData = async (profId?: number) => {
     setLoading(true);
     try {
@@ -65,6 +63,8 @@ export default function AvailabilityPage() {
           active: !!found,
           startTime: found?.startTime || "08:00",
           endTime: found?.endTime || "18:00",
+          lunchStart: found?.lunchStart || "",
+          lunchEnd: found?.lunchEnd || "",
         };
       });
       setSchedule(initialSchedule);
@@ -92,6 +92,8 @@ export default function AvailabilityPage() {
           if (profs.length > 0) {
             setSelectedProfId(profs[0].id);
             await fetchAvailabilityData(profs[0].id);
+          } else {
+            setLoading(false);
           }
         } else {
           await fetchAvailabilityData();
@@ -115,25 +117,28 @@ export default function AvailabilityPage() {
   };
 
   const handleSave = async () => {
+    if (userRole !== "admin" && userRole !== "company_admin") return;
+
     setSaving(true);
     try {
       const toSave = schedule
         .filter((day) => day.active)
-        .map(({ dayOfWeek, startTime, endTime }) => ({
+        .map(({ dayOfWeek, startTime, endTime, lunchStart, lunchEnd }) => ({
           dayOfWeek,
           startTime,
           endTime,
-          // Se for admin, enviamos o ID da profissional selecionada
-          professionalId:
-            userRole === "admin" || userRole === "company_admin"
-              ? selectedProfId
-              : undefined,
+          lunchStart: lunchStart || null,
+          lunchEnd: lunchEnd || null,
         }));
 
-      await availabilityService.saveAvailability(toSave);
+      // Chama o serviço ajustado
+      await availabilityService.saveAvailability({
+        availabilities: toSave,
+        professionalId: selectedProfId,
+      });
 
       setModalTitle("Sucesso!");
-      setModalMessage("Horários salvos com sucesso!");
+      setModalMessage("Horários e pausas atualizados com sucesso!");
       setIsSuccess(true);
       setModalOpen(true);
     } catch (error) {
@@ -148,10 +153,11 @@ export default function AvailabilityPage() {
 
   const toggleModal = () => {
     setModalOpen(!modalOpen);
-    if (isSuccess) router.push("/agenda");
   };
 
-  if (loading && professionals.length === 0) {
+  const canEdit = userRole === "admin" || userRole === "company_admin";
+
+  if (loading && professionals.length === 0 && userRole !== "professional") {
     return (
       <Container
         className="d-flex justify-content-center align-items-center"
@@ -166,11 +172,7 @@ export default function AvailabilityPage() {
     <>
       <Head>
         <title>Configurar Horários | Espaço Virtuosa</title>
-        <link
-          rel="shortcut icon"
-          href="/favicon.png"
-          type="image/x-icon"
-        />{" "}
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderAuth />
@@ -178,10 +180,15 @@ export default function AvailabilityPage() {
         <Container className="mt-5 pb-5">
           <div className={styles.headerSection}>
             <h2 className={styles.title}>Configurar Horários ⏰</h2>
+            {!canEdit && (
+              <p className="text-muted text-center">
+                Seus horários são gerenciados pela administração. Entre em
+                contato para alterações.
+              </p>
+            )}
           </div>
 
-          {/* SELEÇÃO DE PROFISSIONAL PARA O ADMIN */}
-          {(userRole === "admin" || userRole === "company_admin") && (
+          {canEdit && (
             <div
               className="mb-4 p-3 rounded"
               style={{
@@ -189,7 +196,7 @@ export default function AvailabilityPage() {
                 border: "1px solid #d48498",
               }}
             >
-              <Label className="fw-bold">Alterar horários de:</Label>
+              <Label className="fw-bold">Gerenciando horários de:</Label>
               <Input
                 type="select"
                 value={selectedProfId || ""}
@@ -219,20 +226,22 @@ export default function AvailabilityPage() {
             ) : (
               <Form>
                 {schedule.map((day, index) => (
-                  <div key={day.dayOfWeek} className="mb-3 pb-3 border-bottom">
-                    <Row className="align-items-center">
-                      <Col xs="12" md="4">
+                  <div key={day.dayOfWeek} className="mb-4 pb-3 border-bottom">
+                    <Row className="align-items-center mb-2">
+                      <Col xs="12" md="3">
                         <FormGroup check>
                           <Label
                             check
                             style={{
                               fontWeight: day.active ? "bold" : "normal",
                               fontSize: "1.1rem",
+                              color: day.active ? "#000" : "#999",
                             }}
                           >
                             <Input
                               type="checkbox"
                               checked={day.active}
+                              disabled={!canEdit}
                               onChange={(e) =>
                                 handleChange(index, "active", e.target.checked)
                               }
@@ -241,52 +250,142 @@ export default function AvailabilityPage() {
                           </Label>
                         </FormGroup>
                       </Col>
+
                       {day.active && (
-                        <>
-                          <Col xs="5" md="3">
-                            <Input
-                              type="time"
-                              value={day.startTime}
-                              onChange={(e) =>
-                                handleChange(index, "startTime", e.target.value)
-                              }
-                            />
-                          </Col>
-                          <Col xs="2" md="1" className="text-center">
-                            às
-                          </Col>
-                          <Col xs="5" md="3">
-                            <Input
-                              type="time"
-                              value={day.endTime}
-                              onChange={(e) =>
-                                handleChange(index, "endTime", e.target.value)
-                              }
-                            />
-                          </Col>
-                        </>
+                        <Col xs="12" md="9">
+                          <Row>
+                            <Col
+                              xs="6"
+                              md="5"
+                              className="d-flex align-items-center gap-2 mb-2 mb-md-0"
+                            >
+                              <div className="w-100">
+                                <small className="text-muted d-block mb-1">
+                                  Início Exp.
+                                </small>
+                                <Input
+                                  type="time"
+                                  value={day.startTime}
+                                  disabled={!canEdit}
+                                  onChange={(e) =>
+                                    handleChange(
+                                      index,
+                                      "startTime",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+                              <span className="mt-4">-</span>
+                              <div className="w-100">
+                                <small className="text-muted d-block mb-1">
+                                  Fim Exp.
+                                </small>
+                                <Input
+                                  type="time"
+                                  value={day.endTime}
+                                  disabled={!canEdit}
+                                  onChange={(e) =>
+                                    handleChange(
+                                      index,
+                                      "endTime",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+                            </Col>
+
+                            <Col
+                              md="1"
+                              className="d-none d-md-flex align-items-center justify-content-center pt-3"
+                            >
+                              <span style={{ color: "#ddd" }}>|</span>
+                            </Col>
+
+                            <Col
+                              xs="6"
+                              md="5"
+                              className="d-flex align-items-center gap-2"
+                            >
+                              <div className="w-100">
+                                <small className="text-muted d-block mb-1">
+                                  Início Almoço
+                                </small>
+                                <Input
+                                  type="time"
+                                  value={day.lunchStart}
+                                  disabled={!canEdit}
+                                  onChange={(e) =>
+                                    handleChange(
+                                      index,
+                                      "lunchStart",
+                                      e.target.value
+                                    )
+                                  }
+                                  style={{ borderColor: "#b0d4f1" }}
+                                />
+                              </div>
+                              <span className="mt-4">-</span>
+                              <div className="w-100">
+                                <small className="text-muted d-block mb-1">
+                                  Fim Almoço
+                                </small>
+                                <Input
+                                  type="time"
+                                  value={day.lunchEnd}
+                                  disabled={!canEdit}
+                                  onChange={(e) =>
+                                    handleChange(
+                                      index,
+                                      "lunchEnd",
+                                      e.target.value
+                                    )
+                                  }
+                                  style={{ borderColor: "#b0d4f1" }}
+                                />
+                              </div>
+                            </Col>
+                          </Row>
+                        </Col>
                       )}
                     </Row>
                   </div>
                 ))}
 
                 <div className="d-flex justify-content-end mt-4">
-                  <Button
-                    color="secondary"
-                    outline
-                    className="me-3"
-                    onClick={() => router.back()}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    style={{ backgroundColor: "#d48498", border: "none" }}
-                    size="lg"
-                    onClick={handleSave}
-                    disabled={saving}
-                  >
-                    {saving ? <Spinner size="sm" /> : "Salvar Configurações"}
-                  </Button>
+                  {canEdit ? (
+                    <>
+                      <Button
+                        color="secondary"
+                        outline
+                        className="me-3"
+                        onClick={() => router.back()}
+                      >
+                        Voltar
+                      </Button>
+                      <Button
+                        style={{ backgroundColor: "#d48498", border: "none" }}
+                        size="lg"
+                        onClick={handleSave}
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <Spinner size="sm" />
+                        ) : (
+                          "Salvar Configurações"
+                        )}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      color="secondary"
+                      outline
+                      onClick={() => router.back()}
+                    >
+                      Voltar
+                    </Button>
+                  )}
                 </div>
               </Form>
             )}

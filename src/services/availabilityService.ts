@@ -25,8 +25,11 @@ const availabilityService = {
     return res.data; // Retorna array de strings ["2023-10-25 08:00", ...]
   },
 
-  saveAvailability: async (availabilities: any[]) => {
-    const res = await api.put("/availability", { availabilities });
+  saveAvailability: async (data: {
+    availabilities: any[];
+    professionalId?: number | null;
+  }) => {
+    const res = await api.put("/availability", data);
     return res.data;
   },
 };

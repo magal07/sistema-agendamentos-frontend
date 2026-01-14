@@ -21,14 +21,13 @@ import MenuMobile from "../src/components/common/menuMobile";
 import styles from "../styles/scheduleClient.module.scss";
 
 import { formatCPF } from "../utils/masks";
-// --- DATE FNS (Importante para formatar o horário corretamente) ---
+// --- DATE FNS ---
 import { format, parseISO } from "date-fns";
 import {
   getTodayISO,
   getTomorrowISO,
   formatDateDisplay,
   combineDateAndTime,
-  // extractTimeHHMM, // Não vamos mais usar esse, faremos direto com date-fns
 } from "../utils/dateConfig";
 
 import profileService from "../src/services/profileService";
@@ -65,6 +64,15 @@ export default function ScheduleClient() {
   >("review");
   const [modalFeedbackMsg, setModalFeedbackMsg] = useState("");
 
+  // Helper para imagem
+  const getImageUrl = (path?: string) => {
+    if (!path) return "";
+    const cleanPath = path.replace(/\\/g, "/");
+    return `${process.env.NEXT_PUBLIC_BASE_URL}/${
+      cleanPath.startsWith("/") ? cleanPath.substring(1) : cleanPath
+    }`;
+  };
+
   useEffect(() => {
     // Inicializa com a data de hoje
     setSelectedDate(getTodayISO());
@@ -86,13 +94,11 @@ export default function ScheduleClient() {
       .catch(console.error);
   }, []);
 
-  // --- CORREÇÃO DO HORÁRIO (Remove o "2026-...") ---
   const fetchAndFormatSlots = async (
     dateStr: string,
     profId: number,
     srvId: number
   ) => {
-    // parseDate manual aqui pois availabilityService espera Date object
     const [y, m, d] = dateStr.split("-").map(Number);
     const dateObj = new Date(y, m - 1, d);
 
@@ -102,7 +108,6 @@ export default function ScheduleClient() {
       dateObj
     );
 
-    // Transforma "2026-01-13T16:30:00" em "16:30"
     return slots.map((slot: string) => {
       if (slot.includes("T")) {
         return format(parseISO(slot), "HH:mm");
@@ -144,7 +149,6 @@ export default function ScheduleClient() {
           Number(srv.id)
         );
 
-        // Lógica Hoje -> Amanhã
         if (slots.length === 0 && selectedDate === getTodayISO()) {
           const tomorrow = getTomorrowISO();
           const slotsTomorrow = await fetchAndFormatSlots(
@@ -196,15 +200,13 @@ export default function ScheduleClient() {
       !selectedTime
     )
       return;
-    setModalStatus("review"); // Reseta para revisão sempre que abrir
+    setModalStatus("review");
     setConfirmModalOpen(true);
   };
 
-  // --- EXECUÇÃO COM FEEDBACK NO MODAL ---
   const executeSchedule = async () => {
     setLoading(true);
     try {
-      // Como selectedTime agora é limpo ("16:30"), o combineDateAndTime funciona perfeitamente
       const fullDate = combineDateAndTime(selectedDate, selectedTime);
 
       await appointmentService.create(
@@ -214,10 +216,8 @@ export default function ScheduleClient() {
         Number(clientFound.id)
       );
 
-      // SUCESSO: Muda o estado do modal
       setModalStatus("success");
     } catch (err: any) {
-      // ERRO: Muda o estado do modal e salva mensagem
       setModalStatus("error");
       setModalFeedbackMsg(
         err.response?.data?.message || "Ocorreu um erro ao tentar agendar."
@@ -267,9 +267,37 @@ export default function ScheduleClient() {
 
             {clientFound && (
               <div className={styles.clientFoundCard}>
-                <div className={styles.avatarPlaceholder}>
-                  <FiUser />
+                {/* --- FOTO DO CLIENTE --- */}
+                <div
+                  className={styles.avatarPlaceholder}
+                  style={{
+                    overflow: "hidden",
+                    padding: 0,
+                    border: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {clientFound.avatarUrl ? (
+                    <img
+                      src={getImageUrl(clientFound.avatarUrl)}
+                      alt="Cliente"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: "50%",
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <FiUser />
+                  )}
                 </div>
+
                 <div className={styles.clientInfo}>
                   <h4>
                     {clientFound.firstName} {clientFound.lastName}
@@ -463,7 +491,6 @@ export default function ScheduleClient() {
           centered
           backdrop="static"
         >
-          {/* CABEÇALHO */}
           <ModalHeader
             toggle={() =>
               modalStatus === "success"
@@ -482,7 +509,6 @@ export default function ScheduleClient() {
             )}
           </ModalHeader>
 
-          {/* CORPO */}
           <ModalBody>
             {modalStatus === "review" && (
               <div className="text-center py-2">
@@ -497,10 +523,58 @@ export default function ScheduleClient() {
                     textAlign: "left",
                   }}
                 >
-                  <p className="mb-2">
-                    👤 <strong>Cliente:</strong> {clientFound?.firstName}{" "}
-                    {clientFound?.lastName}
-                  </p>
+                  {/* --- BLOC DO CLIENTE COM FOTO --- */}
+                  <div
+                    className="d-flex align-items-center mb-3 p-2 rounded"
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #eee",
+                    }}
+                  >
+                    <div style={{ marginRight: "10px", flexShrink: 0 }}>
+                      {clientFound?.avatarUrl ? (
+                        <img
+                          src={getImageUrl(clientFound.avatarUrl)}
+                          alt="Cliente"
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            backgroundColor: "#eee",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FiUser size={20} color="#777" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <small
+                        className="text-muted d-block"
+                        style={{ lineHeight: 1 }}
+                      >
+                        Cliente
+                      </small>
+                      <strong style={{ color: "#333" }}>
+                        {clientFound?.firstName} {clientFound?.lastName}
+                      </strong>
+                    </div>
+                  </div>
+
                   <p className="mb-2">
                     💇‍♀️ <strong>Profissional:</strong>{" "}
                     {selectedProfessional?.firstName}
@@ -546,7 +620,6 @@ export default function ScheduleClient() {
             )}
           </ModalBody>
 
-          {/* RODAPÉ */}
           <ModalFooter className="justify-content-center border-0 pb-4">
             {modalStatus === "review" && (
               <>

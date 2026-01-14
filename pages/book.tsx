@@ -259,7 +259,7 @@ export default function Book() {
 
   const handleCloseSuccess = () => {
     setConfirmModalOpen(false);
-    router.push("/agenda"); // Vai para a página 'Meus Agendamentos'
+    router.push("/client/dashboard");
   };
 
   // Helpers para exibir nomes no modal
