@@ -271,6 +271,10 @@ export default function Book() {
     return s ? s.name : "";
   };
 
+  const currentProfObj = professionals.find(
+    (p) => p.id.toString() === selectedProf
+  );
+
   return (
     <>
       <Head>
@@ -442,6 +446,40 @@ export default function Book() {
                             <Label className={styles.labelElegant}>
                               Profissional
                             </Label>
+
+                            {/* [NOVO] Bloco que exibe a foto se houver seleção */}
+                            {selectedProf && currentProfObj && (
+                              <div className="d-flex align-items-center mb-2 animate__animated animate__fadeIn">
+                                <img
+                                  src={getImageUrl(currentProfObj.avatarUrl)}
+                                  alt="Foto"
+                                  style={{
+                                    width: "50px",
+                                    height: "50px",
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                    marginRight: "10px",
+                                    border: "2px solid #b06075",
+                                  }}
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/placeholder.png";
+                                  }}
+                                />
+                                <div>
+                                  <small
+                                    className="text-muted d-block"
+                                    style={{ lineHeight: 1 }}
+                                  >
+                                    Você escolheu:
+                                  </small>
+                                  <strong>
+                                    {currentProfObj.firstName}{" "}
+                                    {currentProfObj.lastName}
+                                  </strong>
+                                </div>
+                              </div>
+                            )}
+
                             <Input
                               type="select"
                               className={styles.elegantSelect}
@@ -456,7 +494,7 @@ export default function Book() {
                               ))}
                             </Input>
                           </FormGroup>
-                        </Col>
+                        </Col>{" "}
                         <Col md={6}>
                           <FormGroup>
                             <Label className={styles.labelElegant}>
