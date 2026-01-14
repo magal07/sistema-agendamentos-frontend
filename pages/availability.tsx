@@ -250,14 +250,14 @@ export default function AvailabilityPage() {
                           </Label>
                         </FormGroup>
                       </Col>
-
                       {day.active && (
                         <Col xs="12" md="9">
                           <Row>
+                            {/* Mudei de xs="6" para xs="12" e adicionei mb-3 no mobile para dar espaço */}
                             <Col
-                              xs="6"
+                              xs="12"
                               md="5"
-                              className="d-flex align-items-center gap-2 mb-2 mb-md-0"
+                              className="d-flex align-items-center gap-2 mb-3 mb-md-0"
                             >
                               <div className="w-100">
                                 <small className="text-muted d-block mb-1">
@@ -303,8 +303,9 @@ export default function AvailabilityPage() {
                               <span style={{ color: "#ddd" }}>|</span>
                             </Col>
 
+                            {/* Mudei de xs="6" para xs="12" aqui também */}
                             <Col
-                              xs="6"
+                              xs="12"
                               md="5"
                               className="d-flex align-items-center gap-2"
                             >
@@ -348,7 +349,7 @@ export default function AvailabilityPage() {
                             </Col>
                           </Row>
                         </Col>
-                      )}
+                      )}{" "}
                     </Row>
                   </div>
                 ))}

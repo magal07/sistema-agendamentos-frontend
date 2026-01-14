@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   // output: "export",
+  i18n: {
+    locales: ['pt-BR'],
+    defaultLocale: 'pt-BR',
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
