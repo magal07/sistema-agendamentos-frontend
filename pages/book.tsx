@@ -14,16 +14,17 @@ import {
   CardSubtitle,
   Row,
   Col,
-  Modal, // <--- NOVO
-  ModalHeader, // <--- NOVO
-  ModalBody, // <--- NOVO
-  ModalFooter, // <--- NOVO
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "reactstrap";
 import HeaderAuth from "../src/components/common/headerAuth";
 import Footer from "../src/components/common/footer";
 import styles from "../styles/book.module.scss";
 import { useRouter } from "next/router";
 import DatePicker from "react-datepicker";
+import { FiUser } from "react-icons/fi";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -447,24 +448,45 @@ export default function Book() {
                               Profissional
                             </Label>
 
-                            {/* [NOVO] Bloco que exibe a foto se houver seleção */}
+                            {/* BLOCO DE FOTO OU ÍCONE */}
                             {selectedProf && currentProfObj && (
                               <div className="d-flex align-items-center mb-2 animate__animated animate__fadeIn">
-                                <img
-                                  src={getImageUrl(currentProfObj.avatarUrl)}
-                                  alt="Foto"
-                                  style={{
-                                    width: "50px",
-                                    height: "50px",
-                                    borderRadius: "50%",
-                                    objectFit: "cover",
-                                    marginRight: "10px",
-                                    border: "2px solid #b06075",
-                                  }}
-                                  onError={(e) => {
-                                    e.currentTarget.src = "/placeholder.png";
-                                  }}
-                                />
+                                {/* Condição: Se tiver avatarUrl, mostra foto. Se não, mostra o boneco. */}
+                                {currentProfObj.avatarUrl ? (
+                                  <img
+                                    src={getImageUrl(currentProfObj.avatarUrl)}
+                                    alt="Foto"
+                                    style={{
+                                      width: "50px",
+                                      height: "50px",
+                                      borderRadius: "50%",
+                                      objectFit: "cover",
+                                      marginRight: "10px",
+                                      border: "2px solid #b06075",
+                                    }}
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                    }} // Esconde se quebrar
+                                  />
+                                ) : (
+                                  <div
+                                    style={{
+                                      width: "50px",
+                                      height: "50px",
+                                      borderRadius: "50%",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      marginRight: "10px",
+                                      border: "2px solid #b06075",
+                                      color: "#b06075",
+                                      backgroundColor: "#fff0f3", // Um fundo rosinha bem claro
+                                    }}
+                                  >
+                                    <FiUser size={24} />
+                                  </div>
+                                )}
+
                                 <div>
                                   <small
                                     className="text-muted d-block"
@@ -494,7 +516,7 @@ export default function Book() {
                               ))}
                             </Input>
                           </FormGroup>
-                        </Col>{" "}
+                        </Col>
                         <Col md={6}>
                           <FormGroup>
                             <Label className={styles.labelElegant}>

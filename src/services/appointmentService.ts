@@ -18,7 +18,6 @@ export const appointmentService = {
     return res.data;
   },
 
-  // --- CORREÇÃO AQUI: Adicionado customClientId como 4º argumento opcional ---
   create: async (
     professionalId: number,
     serviceId: number,

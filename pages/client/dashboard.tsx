@@ -41,7 +41,7 @@ interface Appointment {
   appointmentDate: string | Date;
   status: "confirmed" | "pending" | "cancelled" | "completed";
   Service?: { name: string };
-  professional?: { firstName: string };
+  professional?: { firstName: string; avatarUrl?: string };
   client?: { firstName: string; lastName?: string };
 }
 
@@ -133,6 +133,14 @@ export default function ClientDashboard() {
         confirmAction: null,
       });
     }
+  };
+
+  const getImageUrl = (path?: string) => {
+    if (!path) return "";
+    const cleanPath = path.replace(/\\/g, "/");
+    return `${process.env.NEXT_PUBLIC_BASE_URL}/${
+      cleanPath.startsWith("/") ? cleanPath.substring(1) : cleanPath
+    }`;
   };
 
   const handleCancelClick = (id: number) => {
@@ -267,8 +275,9 @@ export default function ClientDashboard() {
                       </small>
                     </div>
                     <div className={styles.details}>
-                      <h3>{nextAppointment.Service?.name}</h3>
-                      <p>
+                      <h3 className="mb-2">{nextAppointment.Service?.name}</h3>
+
+                      <p className="mb-3" style={{ opacity: 0.9 }}>
                         <Icons.Clock />{" "}
                         {format(
                           new Date(nextAppointment.appointmentDate),
@@ -281,13 +290,74 @@ export default function ClientDashboard() {
                           { locale: ptBR }
                         )}
                       </p>
-                      <p>
-                        <Icons.User /> com{" "}
-                        <strong>
-                          {nextAppointment.professional?.firstName}
-                        </strong>
-                      </p>
-                    </div>
+
+                      {/* --- BLOCO DO PROFISSIONAL COM FOTO --- */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        {nextAppointment.professional?.avatarUrl ? (
+                          <img
+                            src={getImageUrl(
+                              nextAppointment.professional.avatarUrl
+                            )}
+                            alt="Profissional"
+                            style={{
+                              width: "45px",
+                              height: "45px",
+                              borderRadius: "50%",
+                              objectFit: "cover",
+                              border: "2px solid rgba(255,255,255,0.8)",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                            }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "45px",
+                              height: "45px",
+                              borderRadius: "50%",
+                              background: "rgba(255,255,255,0.2)",
+                              border: "2px solid rgba(255,255,255,0.4)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#fff",
+                            }}
+                          >
+                            <FiUser size={22} />
+                          </div>
+                        )}
+
+                        <div
+                          style={{ display: "flex", flexDirection: "column" }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "0.85rem",
+                              opacity: 0.8,
+                              lineHeight: 1,
+                            }}
+                          >
+                            Com
+                          </span>
+                          <strong
+                            style={{
+                              fontSize: "1.1rem",
+                              letterSpacing: "0.5px",
+                            }}
+                          >
+                            {nextAppointment.professional?.firstName}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>{" "}
                   </div>
                   <div
                     className="mt-3 text-end"

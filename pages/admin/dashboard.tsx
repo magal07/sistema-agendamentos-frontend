@@ -20,13 +20,13 @@ import { format, parseISO, getHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import styles from "../../styles/homeAuth.module.scss";
 
-// Adicionei FiTrash2 (Lixeira)
 import {
   FiPieChart,
   FiUserPlus,
   FiCalendar,
   FiClock,
   FiTrash2,
+  FiUser,
 } from "react-icons/fi";
 
 const Icons = {
@@ -39,7 +39,13 @@ interface Appointment {
   status: "confirmed" | "pending" | "cancelled" | "completed";
   Service?: { name: string };
   professional?: { firstName: string };
-  client?: { firstName: string; lastName?: string };
+  // Adicionei phone aqui para mostrar no modal de detalhes
+  client?: {
+    firstName: string;
+    lastName?: string;
+    avatarUrl?: string;
+    phone?: string;
+  };
 }
 
 export default function AdminDashboard() {
@@ -49,19 +55,32 @@ export default function AdminDashboard() {
   const [userName, setUserName] = useState("Profissional");
   const [userRole, setUserRole] = useState("");
 
-  // --- 1. ATUALIZAÇÃO DO MODAL (Para suportar Confirmação de Cancelamento) ---
+  // --- 1. ATUALIZAÇÃO DO MODAL DE AVISO/ERRO ---
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
     message: "",
     type: "alert" as "alert" | "confirm" | "success" | "warning",
-    confirmAction: null as null | (() => Promise<void>), // Callback para o botão "Sim"
+    confirmAction: null as null | (() => Promise<void>),
   });
 
+  // Modal de Conclusão (Comissão)
   const [modalComplete, setModalComplete] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
+
+  // --- NOVO: Modal de Detalhes do Cliente ---
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [viewAppt, setViewAppt] = useState<Appointment | null>(null);
+
+  const getImageUrl = (path?: string) => {
+    if (!path) return "";
+    const cleanPath = path.replace(/\\/g, "/");
+    return `${process.env.NEXT_PUBLIC_BASE_URL}/${
+      cleanPath.startsWith("/") ? cleanPath.substring(1) : cleanPath
+    }`;
+  };
 
   const greeting = useMemo(() => {
     const hour = getHours(new Date());
@@ -91,24 +110,27 @@ export default function AdminDashboard() {
     fetchInitialData();
   }, []);
 
-  // --- 2. FILTRAGEM (Remove cancelados e concluídos da lista) ---
   const activeAppointments = useMemo(() => {
-    return (
-      appointments
-        .filter(
-          (appt) => appt.status !== "cancelled" && appt.status !== "completed"
-        )
-        // Opcional: Garantir ordenação por data
-        .sort(
-          (a, b) =>
-            new Date(a.appointmentDate).getTime() -
-            new Date(b.appointmentDate).getTime()
-        )
-    );
+    return appointments
+      .filter(
+        (appt) => appt.status !== "cancelled" && appt.status !== "completed"
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.appointmentDate).getTime() -
+          new Date(b.appointmentDate).getTime()
+      );
   }, [appointments]);
 
-  // --- LÓGICA DE CANCELAMENTO ---
-  const handleCancelClick = (appt: Appointment) => {
+  // --- ABRIR DETALHES ---
+  const handleOpenDetails = (appt: Appointment) => {
+    setViewAppt(appt);
+    setDetailsModalOpen(true);
+  };
+
+  // --- CANCELAMENTO ---
+  const handleCancelClick = (e: React.MouseEvent, appt: Appointment) => {
+    e.stopPropagation(); // Impede que abra o modal de detalhes ao clicar no botão
     setModal({
       isOpen: true,
       title: "Cancelar Agendamento",
@@ -116,11 +138,7 @@ export default function AdminDashboard() {
       type: "confirm",
       confirmAction: async () => {
         try {
-          // Precisamos do userId e role para o service (ou o backend pega do token)
-          // Como o service front geralmente só pede ID, ajustamos aqui:
           const res = await appointmentService.cancel(appt.id);
-
-          // Verifica se retornou aviso (ex: falta de whats) ou sucesso
           if (
             (res as any).status === "pending_approval" ||
             (res as any).type === "warning"
@@ -140,7 +158,7 @@ export default function AdminDashboard() {
               type: "success",
               confirmAction: null,
             });
-            fetchInitialData(); // Atualiza a lista removendo o item
+            fetchInitialData();
           }
         } catch (error: any) {
           setModal({
@@ -155,8 +173,9 @@ export default function AdminDashboard() {
     });
   };
 
-  // --- LÓGICA DE COMPLETAR ---
-  const openCompleteModal = (appt: Appointment) => {
+  // --- COMPLETAR SERVIÇO ---
+  const handleCompleteClick = (e: React.MouseEvent, appt: Appointment) => {
+    e.stopPropagation(); // Impede que abra o modal de detalhes
     setSelectedAppt(appt);
     const dt =
       typeof appt.appointmentDate === "string"
@@ -167,7 +186,7 @@ export default function AdminDashboard() {
     setModalComplete(true);
   };
 
-  const handleComplete = async () => {
+  const handleCompleteConfirm = async () => {
     if (!selectedAppt) return;
     try {
       const finalDate = parseISO(`${newDate}T${newTime}:00`);
@@ -297,12 +316,22 @@ export default function AdminDashboard() {
               <SkeletonCard />
             ) : activeAppointments.length > 0 ? (
               <div className={styles.listContainer}>
-                {/* 3. Renderiza apenas os ATIVOS (limitado a 10) */}
                 {activeAppointments.slice(0, 10).map((appt) => (
                   <div
                     key={appt.id}
                     className={`${styles.appointmentCard} ${styles.confirmed}`}
-                    style={{ borderLeft: "4px solid #b06075" }}
+                    style={{
+                      borderLeft: "4px solid #b06075",
+                      cursor: "pointer", // Indica que é clicável
+                      transition: "transform 0.2s",
+                    }}
+                    onClick={() => handleOpenDetails(appt)} // Clique no Card abre detalhes
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.transform = "translateY(-2px)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.transform = "translateY(0)")
+                    }
                   >
                     <div className={styles.dateBox}>
                       <span className={styles.day}>
@@ -316,10 +345,55 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className={styles.infoBox}>
-                      <p className="mb-1 text-muted small">Cliente</p>
-                      <h4 className="mb-1">
-                        {appt.client?.firstName} {appt.client?.lastName}
-                      </h4>
+                      {/* HEADER DO CLIENTE */}
+                      <div className="d-flex align-items-center mb-2">
+                        {appt.client?.avatarUrl ? (
+                          <img
+                            src={getImageUrl(appt.client.avatarUrl)}
+                            alt="Cliente"
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              borderRadius: "50%",
+                              objectFit: "cover",
+                              marginRight: "8px",
+                              border: "1px solid #ddd",
+                            }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              borderRadius: "50%",
+                              marginRight: "8px",
+                              background: "#f0f0f0",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#888",
+                              border: "1px solid #ddd",
+                            }}
+                          >
+                            <FiUser size={16} />
+                          </div>
+                        )}
+                        <div>
+                          <p
+                            className="mb-0 text-muted small"
+                            style={{ lineHeight: 1 }}
+                          >
+                            Cliente
+                          </p>
+                          <h4 className="mb-0" style={{ fontSize: "1rem" }}>
+                            {appt.client?.firstName} {appt.client?.lastName}
+                          </h4>
+                        </div>
+                      </div>
+
                       <p className={styles.timeRow}>
                         <Icons.Clock />{" "}
                         {format(new Date(appt.appointmentDate), "HH:mm")} •{" "}
@@ -327,7 +401,7 @@ export default function AdminDashboard() {
                       </p>
                     </div>
 
-                    {/* 4. BOTÕES DE AÇÃO (Finalizar e Cancelar) */}
+                    {/* BOTÕES DE AÇÃO */}
                     <div
                       className={styles.actionBox}
                       style={{ flexDirection: "column", gap: "8px" }}
@@ -335,7 +409,7 @@ export default function AdminDashboard() {
                       <button
                         className={styles.btnIconCancel}
                         style={{ borderColor: "#28a745", color: "#28a745" }}
-                        onClick={() => openCompleteModal(appt)}
+                        onClick={(e) => handleCompleteClick(e, appt)} // Passando 'e'
                         title="Finalizar Serviço"
                       >
                         ✅
@@ -344,7 +418,7 @@ export default function AdminDashboard() {
                       <button
                         className={styles.btnIconCancel}
                         style={{ borderColor: "#dc3545", color: "#dc3545" }}
-                        onClick={() => handleCancelClick(appt)}
+                        onClick={(e) => handleCancelClick(e, appt)} // Passando 'e'
                         title="Cancelar Agendamento"
                       >
                         <FiTrash2 size={16} />
@@ -364,6 +438,134 @@ export default function AdminDashboard() {
         <Footer />
         <MenuMobile />
 
+        {/* --- MODAL DE DETALHES (NOVO) --- */}
+        <Modal
+          isOpen={detailsModalOpen}
+          toggle={() => setDetailsModalOpen(false)}
+          centered
+          size="sm" // Modal mais estreito, tipo cartão de visita
+        >
+          <ModalHeader
+            toggle={() => setDetailsModalOpen(false)}
+            className="border-0 pb-0"
+          ></ModalHeader>
+          <ModalBody className="text-center pt-0">
+            {viewAppt && (
+              <div className="d-flex flex-column align-items-center">
+                {/* FOTO GRANDE */}
+                <div className="mb-3 position-relative">
+                  {viewAppt.client?.avatarUrl ? (
+                    <img
+                      src={getImageUrl(viewAppt.client.avatarUrl)}
+                      alt="Cliente"
+                      style={{
+                        width: "120px",
+                        height: "120px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: "4px solid #fff",
+                        boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "120px",
+                        height: "120px",
+                        borderRadius: "50%",
+                        background: "#f8f9fa",
+                        border: "4px solid #fff",
+                        boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#adb5bd",
+                      }}
+                    >
+                      <FiUser size={50} />
+                    </div>
+                  )}
+                </div>
+
+                <h3
+                  className="mb-1"
+                  style={{ fontWeight: "bold", color: "#333" }}
+                >
+                  {viewAppt.client?.firstName} {viewAppt.client?.lastName}
+                </h3>
+                <p className="text-muted mb-4">
+                  {viewAppt.client?.phone || "Sem telefone informado"}
+                </p>
+
+                <div
+                  className="w-100 text-start p-3 rounded"
+                  style={{ background: "#fdfdfd", border: "1px solid #eee" }}
+                >
+                  <div className="mb-2">
+                    <small
+                      className="text-uppercase text-muted"
+                      style={{ fontSize: "0.7rem", fontWeight: "bold" }}
+                    >
+                      Serviço
+                    </small>
+                    <div
+                      style={{
+                        fontSize: "1.1rem",
+                        color: "#b06075",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {viewAppt.Service?.name}
+                    </div>
+                  </div>
+
+                  <div className="d-flex justify-content-between">
+                    <div>
+                      <small
+                        className="text-uppercase text-muted"
+                        style={{ fontSize: "0.7rem", fontWeight: "bold" }}
+                      >
+                        Data
+                      </small>
+                      <div>
+                        {format(
+                          new Date(viewAppt.appointmentDate),
+                          "dd/MM/yyyy"
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <small
+                        className="text-uppercase text-muted"
+                        style={{ fontSize: "0.7rem", fontWeight: "bold" }}
+                      >
+                        Horário
+                      </small>
+                      <div>
+                        {format(new Date(viewAppt.appointmentDate), "HH:mm")}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  block
+                  className="mt-4 w-100"
+                  style={{
+                    borderRadius: "30px",
+                    background: "#333",
+                    border: "none",
+                  }}
+                  onClick={() => setDetailsModalOpen(false)}
+                >
+                  Fechar
+                </Button>
+              </div>
+            )}
+          </ModalBody>
+        </Modal>
+
+        {/* MODAL DE CONCLUSÃO */}
         <Modal
           isOpen={modalComplete}
           toggle={() => setModalComplete(!modalComplete)}
@@ -389,13 +591,13 @@ export default function AdminDashboard() {
             <Button outline onClick={() => setModalComplete(false)}>
               Cancelar
             </Button>
-            <Button color="success" onClick={handleComplete}>
+            <Button color="success" onClick={handleCompleteConfirm}>
               Confirmar
             </Button>
           </ModalFooter>
         </Modal>
 
-        {/* 5. MODAL GENÉRICO ATUALIZADO (Confirmação/Sucesso/Erro) */}
+        {/* MODAL GENÉRICO DE AVISOS */}
         <Modal isOpen={modal.isOpen} toggle={closeModal} centered>
           <ModalHeader
             toggle={closeModal}
@@ -422,7 +624,7 @@ export default function AdminDashboard() {
                   color="danger"
                   onClick={() => modal.confirmAction && modal.confirmAction()}
                 >
-                  Confirmar Cancelamento
+                  Confirmar
                 </Button>
               </>
             ) : (
