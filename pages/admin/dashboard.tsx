@@ -20,8 +20,14 @@ import { format, parseISO, getHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import styles from "../../styles/homeAuth.module.scss";
 
-// Ícones Novos
-import { FiPieChart, FiUserPlus, FiCalendar, FiClock } from "react-icons/fi";
+// Adicionei FiTrash2 (Lixeira)
+import {
+  FiPieChart,
+  FiUserPlus,
+  FiCalendar,
+  FiClock,
+  FiTrash2,
+} from "react-icons/fi";
 
 const Icons = {
   Clock: () => <span>⏰</span>,
@@ -43,19 +49,20 @@ export default function AdminDashboard() {
   const [userName, setUserName] = useState("Profissional");
   const [userRole, setUserRole] = useState("");
 
-  // Modais
+  // --- 1. ATUALIZAÇÃO DO MODAL (Para suportar Confirmação de Cancelamento) ---
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
     message: "",
-    type: "alert",
+    type: "alert" as "alert" | "confirm" | "success" | "warning",
+    confirmAction: null as null | (() => Promise<void>), // Callback para o botão "Sim"
   });
+
   const [modalComplete, setModalComplete] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
-  // Saudação
   const greeting = useMemo(() => {
     const hour = getHours(new Date());
     if (hour >= 5 && hour < 12) return "Bom dia";
@@ -67,7 +74,7 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       const [listData, userData] = await Promise.all([
-        appointmentService.getMyList(), // Para profissional, isso traz a agenda dele
+        appointmentService.getMyList(),
         profileService.fetchCurrent(),
       ]);
       setAppointments(listData);
@@ -84,7 +91,71 @@ export default function AdminDashboard() {
     fetchInitialData();
   }, []);
 
-  // --- LÓGICA DE COMPLETAR SERVIÇO ---
+  // --- 2. FILTRAGEM (Remove cancelados e concluídos da lista) ---
+  const activeAppointments = useMemo(() => {
+    return (
+      appointments
+        .filter(
+          (appt) => appt.status !== "cancelled" && appt.status !== "completed"
+        )
+        // Opcional: Garantir ordenação por data
+        .sort(
+          (a, b) =>
+            new Date(a.appointmentDate).getTime() -
+            new Date(b.appointmentDate).getTime()
+        )
+    );
+  }, [appointments]);
+
+  // --- LÓGICA DE CANCELAMENTO ---
+  const handleCancelClick = (appt: Appointment) => {
+    setModal({
+      isOpen: true,
+      title: "Cancelar Agendamento",
+      message: `Tem certeza que deseja cancelar o atendimento de ${appt.client?.firstName}?`,
+      type: "confirm",
+      confirmAction: async () => {
+        try {
+          // Precisamos do userId e role para o service (ou o backend pega do token)
+          // Como o service front geralmente só pede ID, ajustamos aqui:
+          const res = await appointmentService.cancel(appt.id);
+
+          // Verifica se retornou aviso (ex: falta de whats) ou sucesso
+          if (
+            (res as any).status === "pending_approval" ||
+            (res as any).type === "warning"
+          ) {
+            setModal({
+              isOpen: true,
+              title: "Aviso",
+              message: (res as any).message || "Cancelamento pendente.",
+              type: "warning",
+              confirmAction: null,
+            });
+          } else {
+            setModal({
+              isOpen: true,
+              title: "Sucesso",
+              message: "Agendamento cancelado.",
+              type: "success",
+              confirmAction: null,
+            });
+            fetchInitialData(); // Atualiza a lista removendo o item
+          }
+        } catch (error: any) {
+          setModal({
+            isOpen: true,
+            title: "Erro",
+            message: error.response?.data?.message || "Erro ao cancelar.",
+            type: "alert",
+            confirmAction: null,
+          });
+        }
+      },
+    });
+  };
+
+  // --- LÓGICA DE COMPLETAR ---
   const openCompleteModal = (appt: Appointment) => {
     setSelectedAppt(appt);
     const dt =
@@ -105,8 +176,9 @@ export default function AdminDashboard() {
       setModal({
         isOpen: true,
         title: "✅ Sucesso",
-        message: "Comissão gerada!",
+        message: "Comissão gerada! O agendamento foi finalizado.",
         type: "success",
+        confirmAction: null,
       });
       fetchInitialData();
     } catch (error) {
@@ -115,9 +187,12 @@ export default function AdminDashboard() {
         title: "Erro",
         message: "Falha ao finalizar.",
         type: "alert",
+        confirmAction: null,
       });
     }
   };
+
+  const closeModal = () => setModal({ ...modal, isOpen: false });
 
   const SkeletonCard = () => (
     <div className={`${styles.appointmentCard} ${styles.skeletonPulse}`}>
@@ -144,11 +219,11 @@ export default function AdminDashboard() {
     <AuthGuard allowedRoles={["admin", "company_admin", "professional"]}>
       <Head>
         <title>Painel Profissional - Espaço Virtuosa</title>
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderAuth />
 
-        {/* HERO SIMPLIFICADO PARA ADMIN */}
         <div
           className={styles.heroSection}
           style={{ minHeight: "200px", paddingBottom: "40px" }}
@@ -172,9 +247,7 @@ export default function AdminDashboard() {
         </div>
 
         <Container className="py-4" style={{ marginTop: "-40px" }}>
-          {/* GRID DE CARDS (O Menu Principal do Admin) */}
           <div className={styles.dashboardGrid}>
-            {/* Relatórios (Só Admin/Dono) */}
             {(userRole === "admin" || userRole === "company_admin") && (
               <div
                 className={styles.dashboardCard}
@@ -189,8 +262,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
-
-            {/* Agendar Cliente */}
             <div
               className={styles.dashboardCard}
               onClick={() => router.push("/schedule-client")}
@@ -203,8 +274,6 @@ export default function AdminDashboard() {
                 <p>Marcar para cliente</p>
               </div>
             </div>
-
-            {/* Agenda Completa */}
             <div
               className={styles.dashboardCard}
               onClick={() => router.push("/agenda")}
@@ -219,7 +288,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* LISTA DE PRÓXIMOS AGENDAMENTOS */}
           <div className="mt-5">
             <h3 className={styles.appointmentsTitle}>
               Seus Próximos Atendimentos
@@ -227,9 +295,10 @@ export default function AdminDashboard() {
 
             {loading ? (
               <SkeletonCard />
-            ) : appointments.length > 0 ? (
+            ) : activeAppointments.length > 0 ? (
               <div className={styles.listContainer}>
-                {appointments.slice(0, 10).map((appt) => (
+                {/* 3. Renderiza apenas os ATIVOS (limitado a 10) */}
+                {activeAppointments.slice(0, 10).map((appt) => (
                   <div
                     key={appt.id}
                     className={`${styles.appointmentCard} ${styles.confirmed}`}
@@ -258,11 +327,11 @@ export default function AdminDashboard() {
                       </p>
                     </div>
 
+                    {/* 4. BOTÕES DE AÇÃO (Finalizar e Cancelar) */}
                     <div
                       className={styles.actionBox}
                       style={{ flexDirection: "column", gap: "8px" }}
                     >
-                      {/* Botão Finalizar */}
                       <button
                         className={styles.btnIconCancel}
                         style={{ borderColor: "#28a745", color: "#28a745" }}
@@ -271,13 +340,22 @@ export default function AdminDashboard() {
                       >
                         ✅
                       </button>
+
+                      <button
+                        className={styles.btnIconCancel}
+                        style={{ borderColor: "#dc3545", color: "#dc3545" }}
+                        onClick={() => handleCancelClick(appt)}
+                        title="Cancelar Agendamento"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="text-muted">
-                Nenhum atendimento agendado para hoje.
+                Nenhum atendimento pendente na agenda.
               </p>
             )}
           </div>
@@ -286,7 +364,6 @@ export default function AdminDashboard() {
         <Footer />
         <MenuMobile />
 
-        {/* MODAL COMPLETAR SERVIÇO */}
         <Modal
           isOpen={modalComplete}
           toggle={() => setModalComplete(!modalComplete)}
@@ -318,21 +395,41 @@ export default function AdminDashboard() {
           </ModalFooter>
         </Modal>
 
-        {/* MODAL ALERTA */}
-        <Modal
-          isOpen={modal.isOpen}
-          toggle={() => setModal({ ...modal, isOpen: false })}
-          centered
-        >
-          <ModalHeader>{modal.title}</ModalHeader>
+        {/* 5. MODAL GENÉRICO ATUALIZADO (Confirmação/Sucesso/Erro) */}
+        <Modal isOpen={modal.isOpen} toggle={closeModal} centered>
+          <ModalHeader
+            toggle={closeModal}
+            className={
+              modal.type === "success"
+                ? "text-success"
+                : modal.type === "confirm"
+                ? "text-danger"
+                : modal.type === "warning"
+                ? "text-warning"
+                : ""
+            }
+          >
+            {modal.title}
+          </ModalHeader>
           <ModalBody>{modal.message}</ModalBody>
           <ModalFooter>
-            <Button
-              color="primary"
-              onClick={() => setModal({ ...modal, isOpen: false })}
-            >
-              Ok
-            </Button>
+            {modal.type === "confirm" ? (
+              <>
+                <Button outline color="secondary" onClick={closeModal}>
+                  Voltar
+                </Button>
+                <Button
+                  color="danger"
+                  onClick={() => modal.confirmAction && modal.confirmAction()}
+                >
+                  Confirmar Cancelamento
+                </Button>
+              </>
+            ) : (
+              <Button color="primary" onClick={closeModal}>
+                Ok
+              </Button>
+            )}
           </ModalFooter>
         </Modal>
       </main>

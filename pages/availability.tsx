@@ -166,6 +166,11 @@ export default function AvailabilityPage() {
     <>
       <Head>
         <title>Configurar Horários | Espaço Virtuosa</title>
+        <link
+          rel="shortcut icon"
+          href="/favicon.png"
+          type="image/x-icon"
+        />{" "}
       </Head>
       <main className={styles.main}>
         <HeaderAuth />

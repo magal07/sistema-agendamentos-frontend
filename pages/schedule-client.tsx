@@ -236,6 +236,7 @@ export default function ScheduleClient() {
     <>
       <Head>
         <title>Agendar Cliente | Espaço Virtuosa</title>
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
       <main className={styles.main}>
         <HeaderAuth />

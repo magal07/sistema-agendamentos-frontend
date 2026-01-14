@@ -77,6 +77,7 @@ const AgendaPage = () => {
     <>
       <Head>
         <title>Minha Agenda | Espaço Virtuosa</title>
+        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </Head>
 
       <main className={styles.main}>
